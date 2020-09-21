@@ -1,0 +1,194 @@
+//codigo usuario
+package analisis.vb;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    
+    
+    private Symbol s;
+    public void syntaxError(Symbol s){
+        this.s = s;
+    }
+    public Symbol getS(Symbol s){
+        return this.s = s;
+    }
+
+    public void setAccion(String tipo,String mensaje,String accion){
+            System.out.println(tipo+"         "+mensaje);
+    }
+
+    public void syntax_error(Symbol s){
+            if(s!=null){
+                //ErrorG e = new ErrorG(s.right,s.left,(String) s.value,"Sintactico","Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                //listaErrores.add(e);
+                /*Error error = new Error((String) s.value,s.right, s.left, 2, "Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                erroresSintacticos.add(error);*/
+                setAccion("ERROR","Error Sintaxis token: Linea: " + (s.right+1) + ",   Columna: " + (s.left+1) + ",  Simbolo: " + s.value, "");
+            }
+    }
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal SEPARADOR_VB, SEPARADOR_JAVA, SEPARADOR_PY, SEPARADOR_PROGRAMA;
+terminal INTEGER, DECIMAL_R, CHART, VALOR, SALTO;
+//terminal INTEGER, DECIMAL_R, CHART, VALOR, SALTO, SALTO_SEGUIDO;
+terminal MAS, MENOS, POR, DIV, DIV_ENTERO, POT, MENOR_QUE, MAYOR_QUE, MENOR_IGUAL;
+terminal MAYOR_IGUAL, DIFERENTE, IS, ISNOT, LIKE, COMENTARIO, MSG, CONSOLE_WRT;
+terminal INTINPUT, FLOATINPUT, CHARINPUT, FOR, TO, STEP, NEXT, WHILE, END, DO;
+terminal UNTIL, CONTINUE, EXIT, LOOP, IF, THEN, ELSE, ELSE_IF, SELECT, CASE;
+terminal PUBLIC, DIM, IDENTIFICADOR, AS, IGUAL, DECIMAL, NUMERO, CORCHETE_A;
+terminal CORCHETE_C, LLAVES_A, LLAVES_C, COMA, PARENTESIS_A, PARENTESIS_C;
+terminal AND_RESRV, AND, OR, NOT, XOR, FUNCTION, RETURN, MODULE, SUB, WEND;
+//terminal ;
+
+
+
+// declaracion no terminales
+non terminal INICIO, codigo, bloque_declararion_var, var_identificadores, tipo_datos;
+non terminal valor, tipo_declaracion, struc_select, struc_if, struc_while, struc_for;
+non terminal struc_ciclos, struc_condicionales, struc_procedimientos, struc_modulos, struc_funciones;
+non terminal operacion, condicionales, condicion_xtra, condicionales_1;
+non terminal opcion_step, sentencias, casos, s1, s2, struc_else_if, mensajes, inputs_dato;
+non terminal s3, s4;
+//non terminal ;
+
+//presedencia de menor a mayor
+//precedence left IGUAL,MENOR_QUE,MAYOR_QUE,MAYOR_IGUAL,MENOR_IGUAL, DIFERENTE,PUNTO_PUNTO;
+precedence left MAS, MENOS, AND_RESRV;
+precedence left POR, DIV, DIV_ENTERO;
+precedence left POT;
+
+start with INICIO;
+
+//Reglas Semanticas
+
+INICIO ::=   SEPARADOR_VB codigo SEPARADOR_JAVA SEPARADOR_PY SEPARADOR_PROGRAMA
+            |WHILE;
+
+codigo ::= COMENTARIO
+        |bloque_declararion_var codigo
+        |struc_modulos codigo
+        |struc_funciones codigo
+        |struc_procedimientos codigo
+        | ; 
+
+bloque_declararion_var ::=   DIM IDENTIFICADOR tipo_declaracion
+                            |DIM IDENTIFICADOR IGUAL s4
+                            |IDENTIFICADOR IGUAL s4;
+
+s4 ::=   operacion
+        |inputs_dato;
+
+tipo_declaracion ::= var_identificadores
+                    |AS tipo_datos IGUAL s4;
+
+var_identificadores ::=  COMA IDENTIFICADOR var_identificadores
+                        |AS tipo_datos;
+
+tipo_datos ::=   INTEGER
+                |DECIMAL_R
+                |CHART;
+
+valor ::=    NUMERO
+            |DECIMAL
+            |VALOR;
+
+struc_funciones ::= FUNCTION IDENTIFICADOR PARENTESIS_A PARENTESIS_C AS tipo_datos SALTO sentencias RETURN END FUNCTION;
+
+struc_modulos ::= PUBLIC MODULE IDENTIFICADOR SALTO sentencias END MODULE;
+
+struc_procedimientos ::= SUB IDENTIFICADOR SALTO sentencias END SUB;
+
+struc_condicionales ::=;
+
+struc_ciclos ::= struc_for
+                |struc_while;
+
+struc_for ::= FOR IDENTIFICADOR IGUAL operacion TO operacion opcion_step SALTO sentencias NEXT IDENTIFICADOR SALTO;
+
+opcion_step ::=   STEP operacion
+                |;
+
+struc_while ::=  WHILE condicionales SALTO sentencias WEND SALTO
+                |DO SALTO sentencias LOOP WHILE condicionales SALTO
+                |DO SALTO sentencias LOOP UNTIL condicionales SALTO
+                |DO WHILE condicionales SALTO sentencias LOOP
+                |DO UNTIL condicionales SALTO sentencias LOOP;
+
+struc_if ::= IF condicionales THEN SALTO sentencias struc_else_if END IF SALTO;
+
+struc_else_if ::=    ELSE SALTO sentencias struc_else_if
+                    |ELSE_IF condicionales THEN SALTO sentencias struc_else_if
+                    |;
+
+struc_select ::= SELECT IDENTIFICADOR SALTO casos END SELECT
+                |SELECT CASE IDENTIFICADOR SALTO casos END SELECT;
+
+casos ::=    CASE operacion s2 SALTO sentencias s1
+            |CASE operacion TO operacion SALTO sentencias s1
+            |CASE ELSE SALTO sentencias ;
+
+s1 ::=   casos
+        |;
+
+s2 ::=   COMA operacion s2
+        |;
+
+condicionales ::=    operacion MENOR_QUE operacion condicion_xtra
+                    |operacion MAYOR_QUE operacion condicion_xtra
+                    |operacion MENOR_IGUAL operacion condicion_xtra
+                    |operacion MAYOR_IGUAL operacion condicion_xtra
+                    |operacion DIFERENTE operacion condicion_xtra;
+
+condicionales_1 ::=  operacion MENOR_QUE operacion
+                    |operacion MAYOR_QUE operacion
+                    |operacion MENOR_IGUAL operacion
+                    |operacion MAYOR_IGUAL operacion
+                    |operacion DIFERENTE operacion;
+
+condicion_xtra ::=   AND condicionales_1 condicion_xtra
+                    |OR condicionales_1 condicion_xtra
+                    |NOT condicionales_1 condicion_xtra
+                    |;
+
+operacion ::=    operacion MAS operacion
+                |operacion AND_RESRV operacion
+                |operacion MENOS operacion
+                |operacion POR operacion
+                |operacion DIV operacion
+                |operacion DIV_ENTERO operacion
+                |operacion POT operacion
+                |PARENTESIS_A operacion PARENTESIS_C
+                |CORCHETE_A operacion CORCHETE_C
+                |LLAVES_A operacion LLAVES_C
+                |valor;
+
+
+sentencias ::=   mensajes SALTO
+                |bloque_declararion_var SALTO
+                |struc_ciclos SALTO
+                |struc_if SALTO
+                |struc_select SALTO
+                |COMENTARIO
+                |;
+
+mensajes ::= MSG
+            |CONSOLE_WRT;
+
+inputs_dato ::=  INTINPUT PARENTESIS_A s3 PARENTESIS_C SALTO
+                |FLOATINPUT PARENTESIS_A s3 PARENTESIS_C SALTO
+                |CHARINPUT PARENTESIS_A s3 PARENTESIS_C SALTO;
+
+s3 ::=   VALOR
+        |;
