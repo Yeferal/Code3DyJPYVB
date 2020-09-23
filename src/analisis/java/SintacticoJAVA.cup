@@ -1,1 +1,185 @@
+//codigo usuario
+package analisis.java;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
 
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    
+    
+    private Symbol s;
+    public void syntaxError(Symbol s){
+        this.s = s;
+    }
+    public Symbol getS(Symbol s){
+        return this.s = s;
+    }
+
+    public void setAccion(String tipo,String mensaje,String accion){
+            System.out.println(tipo+"         "+mensaje);
+    }
+
+    public void syntax_error(Symbol s){
+            if(s!=null){
+                //ErrorG e = new ErrorG(s.right,s.left,(String) s.value,"Sintactico","Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                //listaErrores.add(e);
+                /*Error error = new Error((String) s.value,s.right, s.left, 2, "Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                erroresSintacticos.add(error);*/
+                setAccion("ERROR","Error Sintaxis token: Linea: " + (s.right+1) + ",   Columna: " + (s.left+1) + ",  Simbolo: " + s.value, "");
+            }
+    }
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal SEPARADOR_JAVA, SEPARADOR_PROGRAMA;
+terminal CLASS, INTEGER, FLOAT, CHART, AND, OR, NOT, MAS, MENOS, POR, DIV, MENOR_QUE;
+terminal MAYOR_QUE, MENOR_IGUAL, MAYOR_IGUAL, IGUAL, DIFERENTE, COMENTARIO_SIMPLE, COMENTARIO_VARIOS;
+terminal SOUT, INTINPUT, FLOATINPUT, CHARINPUT, FOR, WHILE, DO, IF, ELSE, SWITCH;
+terminal CASE, BREAK, DEFAULT, VOID, RETURN, PUBLIC, IDENTIFICADOR, DECIMAL;
+terminal NUMERO, VALOR, COMILLAS, DOS_PUNTOS,CORCHETE_A, CORCHETE_C, LLAVES_A;
+terminal LLAVES_C, PUNTO_COMA, COMA, PARENTESIS_A, PARENTESIS_C, MAS_MAS, MENOS_MENOS;
+terminal IGUAL_IGUAL;
+//terminal ;
+
+
+
+// declaracion no terminales
+non terminal INICIO, struc_indices, struct_for, codigo, struc_clase, struc_ciclos;
+non terminal struct_while, valor_c, valor_n, struc_a, struc_vars, struc_asig_vars_c;
+non terminal struc_asig_vars_n, ;
+
+//presedencia de menor a mayor
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+
+start with INICIO;
+
+//Reglas Semanticas
+
+INICIO ::=   SEPARADOR_JAVA codigo SEPARADOR_PROGRAMA;
+
+codigo ::=;
+
+
+struc_clase ::=  PUBLIC CLASS IDENTIFICADOR LLAVES_A codigo LLAVES_C struc_clase
+                |;
+
+struc_vars ::=   INT struc_asig_vars_n
+                |FLOAT struc_asig_vars_n
+                |CHAR struc_asig_vars_c
+                |IDENTIFICADOR IGUAL 
+
+struc_asig_vars_n ::=    IDENTIFICADOR IGUAL valor_n COMA struc_asig_vars_n
+                        |IDENTIFICADOR COMA struc_asig_vars_n
+                        |IDENTIFICADOR IGUAL valor_n
+                        |IDENTIFICADOR
+
+struc_asig_vars_c ::=    IDENTIFICADOR IGUAL valor_c COMA struc_asig_vars_c
+                        |IDENTIFICADOR COMA struc_asig_vars_c
+                        |IDENTIFICADOR IGUAL valor_c
+                        |IDENTIFICADOR
+
+struc_ciclos ::= struct_for
+                |struct_while;
+
+struct_for ::= FOR PARENTESIS_A struc_indices PARENTESIS_C LLAVES_A codigo LLAVES_C;
+
+struc_indices ::= IDENTIFICADOR IGUAL valor_n PUNTO_COMA IDENTIFICADOR valor_c PUNTO_COMA IDENTIFICADOR struc_a;
+
+valor_c ::=  valor_n MAS valor_c
+            |valor_n MENOS valor_c
+            |valor_n POR valor_c
+            |valor_n DIV valor_c
+            |PARENTESIS_A valor_c PARENTESIS_C
+            |IDENTIFICADOR
+            |VALOR
+            |NUMERO
+            |DECIMAL;
+
+valor_n ::=  valor_n MAS valor_n
+            |valor_n MENOS valor_n
+            |valor_n POR valor_n
+            |valor_n DIV valor_n
+            |PARENTESIS_A valor_n PARENTESIS_C
+            |IDENTIFICADOR
+            |NUMERO
+            |DECIMAL;
+
+valor_c ::=  MENOR_QUE valor_n
+            |MAYOR_QUE valor_n
+            |MENOR_IGUAL valor_n
+            |MAYOR_IGUAL valor_n
+            |IGUAL_IGUAL valor_n
+            |DIFERENTE valor_n;
+
+struc_a ::=  IGUAL valor_n 
+            |MAS_MAS 
+            |MENOS_MENOS; 
+
+
+struct_while ::= WHILE PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo LLAVES_C ;
+
+valor_condicional ::=    valor MENOR_QUE valor
+                        |valor MAYOR_QUE valor
+                        |valor MENOR_IGUAL valor
+                        |valor MAYOR_IGUAL valor
+                        |valor IGUAL_IGUAL valor
+                        |valor DIFERENTE valor
+                        |PARENTESIS_A valor_condicional PARENTESIS_C;
+
+
+valor ::=    valor MAS valor
+            |valor MENOS valor
+            |valor POR valor
+            |valor DIV valor
+            |PARENTESIS_A valor PARENTESIS_C
+            |IDENTIFICADOR
+            |VALOR
+            |NUMERO
+            |DECIMAL;
+
+struc_condicional ::= struc_logico_not  valor_condicional struc_logico;
+
+struc_logico ::= AND struc_logico_not  valor_condicional struc_logico
+                |OR struc_logico_not  valor_condicional struc_logico
+                | ;
+
+struc_logico_not ::= NOT
+                    |;
+
+struc_if ::= IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo LLAVES_C
+
+struc_else ::=   ELSE IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo LLAVES_C
+                |ELSE LLAVES_A codigo LLAVES_C
+                | ;
+
+struc_switch ::= SWITCH PARENTESIS_A IDENTIFICADOR PARENTESIS_C LLAVES_A struc_case LLAVES_C;
+
+struc_case ::=   CASE valor_case DOS_PUNTOS codigo BREAK PUNTO_COMA struc_case
+                |CASE valor_case DOS_PUNTOS codigo BREAK PUNTO_COMA
+                |DEFAULT DOS_PUNTOS codigo;
+
+valor_case ::=   VALOR
+                |NUMERO
+                |DECIMAL;
+
+struc_function ::= PUBLIC VOID PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo LLAVES_C;
+
+struc_params ::= struc_vars_params params
+                |;
+
+params ::=   COMA struc_vars_params params
+            |;
+
+struc_vars_params ::=    INT IDENTIFICADOR
+                        |FLOAT IDENTIFICADOR
+                        |CHAR IDENTIFICADOR;

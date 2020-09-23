@@ -60,7 +60,7 @@ non terminal valor, tipo_declaracion, struc_select, struc_if, struc_while, struc
 non terminal struc_ciclos, struc_condicionales, struc_procedimientos, struc_modulos, struc_funciones;
 non terminal operacion, condicionales, condicion_xtra, condicionales_1;
 non terminal opcion_step, sentencias, casos, s1, s2, struc_else_if, mensajes, inputs_dato;
-non terminal s3, s4;
+non terminal s3, s4, s5, parametros, s6, s7, s8, sentencias_1, s9;
 //non terminal ;
 
 //presedencia de menor a mayor
@@ -73,15 +73,12 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_VB codigo SEPARADOR_JAVA SEPARADOR_PY SEPARADOR_PROGRAMA
+INICIO ::=   SEPARADOR_VB codigo SEPARADOR_PROGRAMA
             |WHILE;
 
-codigo ::= COMENTARIO
-        |bloque_declararion_var codigo
-        |struc_modulos codigo
-        |struc_funciones codigo
-        |struc_procedimientos codigo
-        | ; 
+codigo ::=   COMENTARIO
+            |struc_modulos SALTO codigo
+            |s9; 
 
 bloque_declararion_var ::=   DIM IDENTIFICADOR tipo_declaracion
                             |DIM IDENTIFICADOR IGUAL s4
@@ -104,40 +101,57 @@ valor ::=    NUMERO
             |DECIMAL
             |VALOR;
 
-struc_funciones ::= FUNCTION IDENTIFICADOR PARENTESIS_A PARENTESIS_C AS tipo_datos SALTO sentencias RETURN END FUNCTION;
+struc_funciones ::= FUNCTION IDENTIFICADOR s5 RETURN END FUNCTION SALTO;
 
-struc_modulos ::= PUBLIC MODULE IDENTIFICADOR SALTO sentencias END MODULE;
+struc_modulos ::= PUBLIC MODULE IDENTIFICADOR SALTO s7 END MODULE;
 
-struc_procedimientos ::= SUB IDENTIFICADOR SALTO sentencias END SUB;
+struc_procedimientos ::= SUB IDENTIFICADOR s6 END SUB SALTO;
 
-struc_condicionales ::=;
+s5 ::=   PARENTESIS_A parametros PARENTESIS_C AS tipo_datos SALTO sentencias
+        |PARENTESIS_A PARENTESIS_C AS tipo_datos SALTO sentencias ;
+
+s6 ::=   PARENTESIS_A parametros PARENTESIS_C SALTO sentencias
+        |PARENTESIS_A PARENTESIS_C SALTO sentencias;
+
+s7 ::=   bloque_declararion_var s7
+        |struc_funciones s7
+        |struc_procedimientos s7
+        |COMENTARIO s7
+        |SALTO
+        |;
+
+s9 ::= SALTO s9
+        |;
+
+parametros ::=   IDENTIFICADOR AS tipo_datos COMA parametros
+                |IDENTIFICADOR AS tipo_datos;
 
 struc_ciclos ::= struc_for
                 |struc_while;
 
-struc_for ::= FOR IDENTIFICADOR IGUAL operacion TO operacion opcion_step SALTO sentencias NEXT IDENTIFICADOR SALTO;
+struc_for ::= FOR IDENTIFICADOR IGUAL operacion TO operacion opcion_step SALTO s8 NEXT IDENTIFICADOR SALTO;
 
 opcion_step ::=   STEP operacion
                 |;
 
-struc_while ::=  WHILE condicionales SALTO sentencias WEND SALTO
-                |DO SALTO sentencias LOOP WHILE condicionales SALTO
-                |DO SALTO sentencias LOOP UNTIL condicionales SALTO
-                |DO WHILE condicionales SALTO sentencias LOOP
-                |DO UNTIL condicionales SALTO sentencias LOOP;
+struc_while ::=  WHILE condicionales SALTO s8 WEND SALTO
+                |DO SALTO s8 LOOP WHILE condicionales SALTO
+                |DO SALTO s8 LOOP UNTIL condicionales SALTO
+                |DO WHILE condicionales SALTO s8 LOOP
+                |DO UNTIL condicionales SALTO s8 LOOP;
 
-struc_if ::= IF condicionales THEN SALTO sentencias struc_else_if END IF SALTO;
+struc_if ::= IF condicionales THEN SALTO s8 struc_else_if END IF SALTO;
 
-struc_else_if ::=    ELSE SALTO sentencias struc_else_if
-                    |ELSE_IF condicionales THEN SALTO sentencias struc_else_if
+struc_else_if ::=    ELSE SALTO s8 struc_else_if
+                    |ELSE_IF condicionales THEN SALTO s8 struc_else_if
                     |;
 
-struc_select ::= SELECT IDENTIFICADOR SALTO casos END SELECT
-                |SELECT CASE IDENTIFICADOR SALTO casos END SELECT;
+struc_select ::= SELECT IDENTIFICADOR SALTO casos END SELECT SALTO
+                |SELECT CASE IDENTIFICADOR SALTO casos END SELECT SALTO;
 
-casos ::=    CASE operacion s2 SALTO sentencias s1
-            |CASE operacion TO operacion SALTO sentencias s1
-            |CASE ELSE SALTO sentencias ;
+casos ::=    CASE operacion s2 SALTO s8 s1
+            |CASE operacion TO operacion SALTO s8 s1
+            |CASE ELSE SALTO s8;
 
 s1 ::=   casos
         |;
@@ -175,20 +189,32 @@ operacion ::=    operacion MAS operacion
                 |valor;
 
 
-sentencias ::=   mensajes SALTO
+sentencias_1 ::=   mensajes SALTO
                 |bloque_declararion_var SALTO
-                |struc_ciclos SALTO
-                |struc_if SALTO
-                |struc_select SALTO
+                |struc_ciclos
+                |struc_if
+                |struc_select
                 |COMENTARIO
+                |SALTO;
+
+sentencias ::=   sentencias mensajes
+                |sentencias bloque_declararion_var SALTO
+                |sentencias struc_ciclos
+                |sentencias struc_if
+                |sentencias struc_select
+                |sentencias COMENTARIO
+                |sentencias SALTO
                 |;
 
-mensajes ::= MSG
-            |CONSOLE_WRT;
+mensajes ::= MSG operacion PARENTESIS_C SALTO
+            |CONSOLE_WRT operacion PARENTESIS_C SALTO; 
 
-inputs_dato ::=  INTINPUT PARENTESIS_A s3 PARENTESIS_C SALTO
-                |FLOATINPUT PARENTESIS_A s3 PARENTESIS_C SALTO
-                |CHARINPUT PARENTESIS_A s3 PARENTESIS_C SALTO;
+inputs_dato ::=  INTINPUT PARENTESIS_A s3 PARENTESIS_C
+                |FLOATINPUT PARENTESIS_A s3 PARENTESIS_C
+                |CHARINPUT PARENTESIS_A s3 PARENTESIS_C;
 
 s3 ::=   VALOR
+        |;
+
+s8 ::=   s8 sentencias_1
         |;

@@ -29,7 +29,7 @@ Letra           = ([a-zA-Z] | ñ | Ñ)
 Digito          = [0-9]
 Numero          = {Digito} {Digito}*
 LqSea           =  ({Signo}|{Letra}|{Numero})*
-Espacio         = [ \t\r\n]+
+Espacio         = [ \t\r]+
 Siguiente       = (" _\n")+
 %%
 
@@ -37,10 +37,8 @@ Siguiente       = (" _\n")+
 
 
 <YYINITIAL> {
-    "%%VB"                                      {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_VB , yycolumn, yyline, yytext());}
-    ("%%JAVA" ({LqSea}|.)*)                     {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_JAVA , yycolumn, yyline, yytext());}
-    ("%%PY" ({LqSea}|.)*)                       {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_PY , yycolumn, yyline, yytext());}
-    ("%%PROGRAMA" ({LqSea}|.)*)                 {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
+    "%%VB"("\n"|"")                                      {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_VB , yycolumn, yyline, yytext());}
+    ("%%JAVA" "\n" ({LqSea}|.|"\n")*)("%%PY" "\n" ({LqSea}|.|"\n")*)("%%PROGRAMA" "\n" ({LqSea}|.)*)                 {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
     "\n"                                        {System.out.println(yytext()); return new Symbol(SimbolosVB.SALTO , yycolumn, yyline, yytext());}
     //(" _\n"|"\b_\n")                            {System.out.println(yytext()); return new Symbol(SimbolosVB.SALTO_SEGUIDO , yycolumn, yyline, yytext());}
 
@@ -81,9 +79,9 @@ Siguiente       = (" _\n")+
     ("'"(({LqSea}|.)* (" _\n" | "\b_\n")? )* "\n")                     {System.out.println("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
     
     //Mensaje Pantalla
-    ("MsgBox(" ({LqSea}|.)* ")")               {System.out.println("Mensaje msgbox"); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
-    //("MessageBox(" (({LqSea}|.)* ")")         {System.out.println("Mensaje msgbox"); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
-    ("Console.WriteLine(" ({LqSea}|.)* ")")    {System.out.println("Mensaje console"); return new Symbol(SimbolosVB.CONSOLE_WRT , yycolumn, yyline, yytext());}
+    "MsgBox("               {System.out.println("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
+    "MessageBox("         {System.out.println("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
+    "Console.WriteLine("    {System.out.println("Mensaje console: "+yytext()); return new Symbol(SimbolosVB.CONSOLE_WRT , yycolumn, yyline, yytext());}
     
     //Solicitud de Datos
     "intinput"                                  {System.out.println("intinput"); return new Symbol(SimbolosVB.INTINPUT , yycolumn, yyline, yytext());}
