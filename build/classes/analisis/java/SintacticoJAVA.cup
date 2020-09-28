@@ -41,13 +41,13 @@ action code
 
 //Declaraciones 
 terminal SEPARADOR_JAVA, SEPARADOR_PROGRAMA;
-terminal CLASS, INTEGER, FLOAT, CHART, AND, OR, NOT, MAS, MENOS, POR, DIV, MENOR_QUE;
+terminal CLASS, INT, FLOAT, CHAR, AND, OR, NOT, MAS, MENOS, POR, DIV, MENOR_QUE;
 terminal MAYOR_QUE, MENOR_IGUAL, MAYOR_IGUAL, IGUAL, DIFERENTE, COMENTARIO_SIMPLE, COMENTARIO_VARIOS;
 terminal SOUT, INTINPUT, FLOATINPUT, CHARINPUT, FOR, WHILE, DO, IF, ELSE, SWITCH;
 terminal CASE, BREAK, DEFAULT, VOID, RETURN, PUBLIC, IDENTIFICADOR, DECIMAL;
-terminal NUMERO, VALOR, COMILLAS, DOS_PUNTOS,CORCHETE_A, CORCHETE_C, LLAVES_A;
+terminal NUMERO, VALOR, DOS_PUNTOS,CORCHETE_A, CORCHETE_C, LLAVES_A;
 terminal LLAVES_C, PUNTO_COMA, COMA, PARENTESIS_A, PARENTESIS_C, MAS_MAS, MENOS_MENOS;
-terminal IGUAL_IGUAL;
+terminal IGUAL_IGUAL, TEXTO;
 //terminal ;
 
 
@@ -55,7 +55,11 @@ terminal IGUAL_IGUAL;
 // declaracion no terminales
 non terminal INICIO, struc_indices, struct_for, codigo, struc_clase, struc_ciclos;
 non terminal struct_while, valor_c, valor_n, struc_a, struc_vars, struc_asig_vars_c;
-non terminal struc_asig_vars_n, ;
+non terminal struc_asig_vars_n, struc_if, struc_else, struc_switch, struc_case;
+non terminal valor_case, struc_function, struc_params, params, struc_vars_params;
+non terminal valor_condicional, valor, struct_do_while, comentarios;
+non terminal struc_condicional, struc_logico, struc_logico_not, vars, valor_m;
+non terminal mensaje, valor_comprobacion, codigo_funcion, codigo_inicial, inputs;
 
 //presedencia de menor a mayor
 precedence left MAS, MENOS;
@@ -65,40 +69,60 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_JAVA codigo SEPARADOR_PROGRAMA;
+INICIO ::=   SEPARADOR_JAVA codigo_inicial SEPARADOR_PROGRAMA;
 
-codigo ::=;
 
+codigo_inicial ::=   struc_clase;
+
+
+codigo ::=   struc_vars codigo
+            |struc_function codigo
+            |mensaje codigo
+            |comentarios codigo
+            |;
+
+codigo_funcion ::=   struc_vars codigo_funcion
+                    |struc_ciclos codigo_funcion
+                    |struc_if codigo_funcion
+                    |struc_switch codigo_funcion
+                    |mensaje codigo_funcion
+                    |inputs codigo_funcion
+                    |comentarios codigo_funcion
+                    |;
+
+comentarios ::=  COMENTARIO_SIMPLE
+                |COMENTARIO_VARIOS;
 
 struc_clase ::=  PUBLIC CLASS IDENTIFICADOR LLAVES_A codigo LLAVES_C struc_clase
                 |;
 
-struc_vars ::=   INT struc_asig_vars_n
-                |FLOAT struc_asig_vars_n
-                |CHAR struc_asig_vars_c
-                |IDENTIFICADOR IGUAL 
+struc_vars ::=   INT struc_asig_vars_n PUNTO_COMA
+                |FLOAT struc_asig_vars_n PUNTO_COMA
+                |CHAR struc_asig_vars_c PUNTO_COMA
+                |IDENTIFICADOR IGUAL valor PUNTO_COMA;
 
 struc_asig_vars_n ::=    IDENTIFICADOR IGUAL valor_n COMA struc_asig_vars_n
                         |IDENTIFICADOR COMA struc_asig_vars_n
                         |IDENTIFICADOR IGUAL valor_n
-                        |IDENTIFICADOR
+                        |IDENTIFICADOR;
 
 struc_asig_vars_c ::=    IDENTIFICADOR IGUAL valor_c COMA struc_asig_vars_c
                         |IDENTIFICADOR COMA struc_asig_vars_c
                         |IDENTIFICADOR IGUAL valor_c
-                        |IDENTIFICADOR
+                        |IDENTIFICADOR;
 
 struc_ciclos ::= struct_for
+                |struct_do_while
                 |struct_while;
 
-struct_for ::= FOR PARENTESIS_A struc_indices PARENTESIS_C LLAVES_A codigo LLAVES_C;
+struct_for ::= FOR PARENTESIS_A struc_indices PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C;
 
-struc_indices ::= IDENTIFICADOR IGUAL valor_n PUNTO_COMA IDENTIFICADOR valor_c PUNTO_COMA IDENTIFICADOR struc_a;
+struc_indices ::= IDENTIFICADOR IGUAL valor_n PUNTO_COMA IDENTIFICADOR valor_comprobacion PUNTO_COMA IDENTIFICADOR struc_a;
 
-valor_c ::=  valor_n MAS valor_c
-            |valor_n MENOS valor_c
-            |valor_n POR valor_c
-            |valor_n DIV valor_c
+valor_c ::=  valor_c MAS valor_c
+            |valor_c MENOS valor_c
+            |valor_c POR valor_c
+            |valor_c DIV valor_c
             |PARENTESIS_A valor_c PARENTESIS_C
             |IDENTIFICADOR
             |VALOR
@@ -114,7 +138,7 @@ valor_n ::=  valor_n MAS valor_n
             |NUMERO
             |DECIMAL;
 
-valor_c ::=  MENOR_QUE valor_n
+valor_comprobacion ::=  MENOR_QUE valor_n
             |MAYOR_QUE valor_n
             |MENOR_IGUAL valor_n
             |MAYOR_IGUAL valor_n
@@ -126,7 +150,9 @@ struc_a ::=  IGUAL valor_n
             |MENOS_MENOS; 
 
 
-struct_while ::= WHILE PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo LLAVES_C ;
+struct_while ::= WHILE PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C ;
+
+struct_do_while ::= DO LLAVES_A codigo_funcion LLAVES_C WHILE PARENTESIS_A struc_condicional PARENTESIS_C PUNTO_COMA;
 
 valor_condicional ::=    valor MENOR_QUE valor
                         |valor MAYOR_QUE valor
@@ -156,23 +182,24 @@ struc_logico ::= AND struc_logico_not  valor_condicional struc_logico
 struc_logico_not ::= NOT
                     |;
 
-struc_if ::= IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo LLAVES_C
+struc_if ::= IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C struc_else ;
 
-struc_else ::=   ELSE IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo LLAVES_C
-                |ELSE LLAVES_A codigo LLAVES_C
+struc_else ::=   ELSE IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C struc_else
+                |ELSE LLAVES_A codigo_funcion LLAVES_C
                 | ;
 
 struc_switch ::= SWITCH PARENTESIS_A IDENTIFICADOR PARENTESIS_C LLAVES_A struc_case LLAVES_C;
 
-struc_case ::=   CASE valor_case DOS_PUNTOS codigo BREAK PUNTO_COMA struc_case
-                |CASE valor_case DOS_PUNTOS codigo BREAK PUNTO_COMA
-                |DEFAULT DOS_PUNTOS codigo;
+struc_case ::=   CASE valor_case DOS_PUNTOS codigo_funcion BREAK PUNTO_COMA struc_case
+                |CASE valor_case DOS_PUNTOS codigo_funcion BREAK PUNTO_COMA
+                |DEFAULT DOS_PUNTOS codigo_funcion;
 
 valor_case ::=   VALOR
                 |NUMERO
                 |DECIMAL;
 
-struc_function ::= PUBLIC VOID PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo LLAVES_C;
+struc_function ::=  PUBLIC VOID IDENTIFICADOR PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C
+                   |PUBLIC vars IDENTIFICADOR PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion RETURN valor PUNTO_COMA LLAVES_C ;
 
 struc_params ::= struc_vars_params params
                 |;
@@ -183,3 +210,25 @@ params ::=   COMA struc_vars_params params
 struc_vars_params ::=    INT IDENTIFICADOR
                         |FLOAT IDENTIFICADOR
                         |CHAR IDENTIFICADOR;
+
+vars ::=     INT
+            |FLOAT
+            |CHAR;
+
+mensaje ::= SOUT valor_m PARENTESIS_C PUNTO_COMA;
+
+valor_m ::=  valor_m MAS valor_m
+            |valor_m MENOS valor_m
+            |valor_m POR valor_m
+            |valor_m DIV valor_m
+            |PARENTESIS_A valor_m PARENTESIS_C
+            |IDENTIFICADOR
+            |TEXTO
+            |VALOR
+            |NUMERO
+            |DECIMAL;
+
+inputs ::=   CHARINPUT
+            |FLOATINPUT
+            |INTINPUT;
+

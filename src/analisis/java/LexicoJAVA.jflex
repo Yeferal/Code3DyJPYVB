@@ -19,7 +19,6 @@ import java.util.ArrayList;
 %column
 %full
 //%ignorecase
-
 //%unicode
 
     //expreciones regulares
@@ -30,26 +29,27 @@ Digito          = [0-9]
 Numero          = {Digito} {Digito}*
 LqSea           =  ({Signo}|{Letra}|{Numero})*
 Espacio         = [ \t\r\n]+
-Siguiente       = (" _\n")+
 %%
 
 
 
 
 <YYINITIAL> {
-    ("%%VB" "\n" ({LqSea}|.)*)"%%JAVA" "\n"                                     {System.out.println(yytext()); return new Symbol(SimbolosJAVA.SEPARADOR_JAVA , yycolumn, yyline, yytext());}
-    ("%%PY" "\n" ({LqSea}|.)*)("%%PROGRAMA" ("\n"|"") ({LqSea}|.)*)                 {System.out.println(yytext()); return new Symbol(SimbolosJAVA.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
+    ("%%VB" ({LqSea}|.|"\n")*)("%%JAVA")                                    {System.out.println(yytext()); return new Symbol(SimbolosJAVA.SEPARADOR_JAVA , yycolumn, yyline, yytext());}
+    //("%%VB" ({LqSea}|.|"")*)("%%JAVA")                                      {System.out.println(yytext()); return new Symbol(SimbolosJAVA.SEPARADOR_JAVA , yycolumn, yyline, yytext());}
+    ("%%PY" ({LqSea}|.|"\n")*)("%%PROGRAMA" ({LqSea}|.|"\n")*)                    {System.out.println(yytext()); return new Symbol(SimbolosJAVA.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
     
     //Tipo de Datos
     "class"                                   {System.out.println(yytext()); return new Symbol(SimbolosJAVA.CLASS , yycolumn, yyline, yytext());}
-    "int"                                   {System.out.println(yytext()); return new Symbol(SimbolosJAVA.INTEGER , yycolumn, yyline, yytext());}
+    "int"                                   {System.out.println(yytext()); return new Symbol(SimbolosJAVA.INT , yycolumn, yyline, yytext());}
     "float"                                   {System.out.println(yytext()); return new Symbol(SimbolosJAVA.FLOAT , yycolumn, yyline, yytext());}
-    "char"                                     {System.out.println(yytext()); return new Symbol(SimbolosJAVA.CHART , yycolumn, yyline, yytext());}
+    "char"                                     {System.out.println(yytext()); return new Symbol(SimbolosJAVA.CHAR , yycolumn, yyline, yytext());}
     
     //Reservadas
     "&&"                                       {System.out.println(yytext()); return new Symbol(SimbolosJAVA.AND , yycolumn, yyline, yytext());}
     "||"                                        {System.out.println(yytext()); return new Symbol(SimbolosJAVA.OR , yycolumn, yyline, yytext());}
     "!"                                       {System.out.println(yytext()); return new Symbol(SimbolosJAVA.NOT , yycolumn, yyline, yytext());}
+    //"%"                                       {System.out.println(yytext()); return new Symbol(SimbolosJAVA.NOT , yycolumn, yyline, yytext());}
 
     //Expresiones Aritmeticas
     "++"                                         {System.out.println("MAS_MAS"); return new Symbol(SimbolosJAVA.MAS_MAS , yycolumn, yyline, yytext());}
@@ -72,7 +72,7 @@ Siguiente       = (" _\n")+
     ("/*"({LqSea}|.|"\n")* "*/")                     {System.out.println("Comentario: "+yytext()); return new Symbol(SimbolosJAVA.COMENTARIO_VARIOS , yycolumn, yyline, yytext());}
     
     //Mensaje Pantalla
-    "System.out.println("               {/*System.out.println("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosJAVA.SOUT , yycolumn, yyline, yytext());*/}
+    "System.out.println("               {System.out.println("Mensaje SOUT: "+yytext()); return new Symbol(SimbolosJAVA.SOUT , yycolumn, yyline, yytext());}
     
     //Solicitud de Datos
     "intinput"                                  {System.out.println("intinput"); return new Symbol(SimbolosJAVA.INTINPUT , yycolumn, yyline, yytext());}
@@ -101,16 +101,14 @@ Siguiente       = (" _\n")+
     "return"                                    {System.out.println(yytext()); return new Symbol(SimbolosJAVA.RETURN , yycolumn, yyline, yytext());}
     
     //Declaracion de variables
-    "Public"                                    {System.out.println(yytext()); return new Symbol(SimbolosJAVA.PUBLIC , yycolumn, yyline, yytext());}
+    "public"                                    {System.out.println(yytext()); return new Symbol(SimbolosJAVA.PUBLIC , yycolumn, yyline, yytext());}
     ({Letra})("_"| {Letra}| {Numero})*          {System.out.println("id: "+yytext()); return new Symbol(SimbolosJAVA.IDENTIFICADOR , yycolumn, yyline, yytext());}
     
     (("-")?{Numero}"."{Numero})                       {System.out.println("DECIMAL: "+yytext()); return new Symbol(SimbolosJAVA.DECIMAL , yycolumn, yyline, yytext());}
     (("-")?{Numero})                                  {System.out.println("NUMERO: "+yytext()); return new Symbol(SimbolosJAVA.NUMERO , yycolumn, yyline, yytext());}
-    ("'"({LqSea}|.)*"'")                        {System.out.println(yytext()); return new Symbol(SimbolosJAVA.VALOR , yycolumn, yyline, yytext());}
-    ("\""({LqSea}|.)*"\"")                      {System.out.println(yytext()); return new Symbol(SimbolosJAVA.VALOR , yycolumn, yyline, yytext());}
+    ("'"({LqSea}|.)"'")                        {System.out.println(yytext()); return new Symbol(SimbolosJAVA.VALOR , yycolumn, yyline, yytext());}
+    ("\""({LqSea}|.)*"\"")                      {System.out.println("texto"+yytext()); return new Symbol(SimbolosJAVA.TEXTO , yycolumn, yyline, yytext());}
     
-    
-    {Siguiente}                                   {/*Ignore*/}
     {Espacio}                                   {/*Ignore*/}
     //"\n"                                       {System.out.println("salto"); return new Symbol(SimbolosJAVA.SALTO , yycolumn, yyline, yytext());}
     //"\""                                        {System.out.println("comillas"); return new Symbol(SimbolosJAVA.COMILLAS , yycolumn, yyline, yytext());}

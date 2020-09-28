@@ -1,1 +1,294 @@
+//codigo usuario
+package analisis.cpp;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
 
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    
+    
+    private Symbol s;
+    public void syntaxError(Symbol s){
+        this.s = s;
+    }
+    public Symbol getS(Symbol s){
+        return this.s = s;
+    }
+
+    public void setAccion(String tipo,String mensaje,String accion){
+            System.out.println(tipo+"         "+mensaje);
+    }
+
+    public void syntax_error(Symbol s){
+            if(s!=null){
+                //ErrorG e = new ErrorG(s.right,s.left,(String) s.value,"Sintactico","Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                //listaErrores.add(e);
+                /*Error error = new Error((String) s.value,s.right, s.left, 2, "Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                erroresSintacticos.add(error);*/
+                setAccion("ERROR","Error Sintaxis token: Linea: " + (s.right+1) + ",   Columna: " + (s.left+1) + ",  Simbolo: " + s.value, "");
+            }
+    }
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal SEPARADOR_PROGRAMA, INCLUDE, CONSTANTE, SCANF, CLEARS, GETCH, ANDPERSAND;
+terminal AND, OR, NOT, MAS_MAS, MAS, MENOS_MENOS, MENOS, MODULO, POR, DIV;
+terminal MENOR_QUE, MAYOR_QUE, MENOR_IGUAL, MAYOR_IGUAL, IGUAL_IGUAL, DIFERENTE;
+terminal INT, FLOAT, CHAR, COMENTARIO_SIMPLE, COMENTARIO_VARIOS, PRINTF;
+//terminal CLASS, INT, FLOAT, CHAR, COMENTARIO_SIMPLE, COMENTARIO_VARIOS, PRINTF;
+//terminal INTINPUT, FLOATINPUT, CHARINPUT, FOR, WHILE, DO, IF, ELSE, SWITCH, CASE;
+terminal FOR, WHILE, DO, IF, ELSE, SWITCH, CASE;
+terminal BREAK, DEFAULT, VOID, RETURN, IDENTIFICADOR, NUMERO, DECIMAL, VALOR, TEXTO;
+terminal IGUAL, DOS_PUNTOS, CORCHETE_A, CORCHETE_C, LLAVES_A, LLAVES_C, PUNTO_COMA;
+terminal COMA, PARENTESIS_A, PARENTESIS_C, PUNTO;
+//terminal ;
+
+
+
+// declaracion no terminales
+non terminal INICIO, codigo, codigo_funcion, struc_vars, struc_constante;
+non terminal struc_asig_vars_n, struc_asig_vars_c;
+non terminal struc_arreglo, struc_ciclos, struct_for, struc_indices, valor_c;
+non terminal valor_n, valor_int, valor_comprobacion, valor, struc_a, struct_while;
+non terminal struct_do_while, comentarios, valor_condicional, struc_condicional;
+non terminal struc_logico, struc_logico_not, struc_if, struc_else, struc_switch;
+non terminal struc_case, valor_case, struc_function, struc_params, params;
+non terminal struc_vars_params, vars, mensaje, valor_m, parentesis, identificador_include, includs, includs_code, struc_llamada;
+non terminal struc_scanf, parametros_llamada, val_llamada, var_senten, struc_printf, struc_dim_arreglo;
+//non terminal ;
+
+//presedencia de menor a mayor
+precedence left MODULO;
+precedence left MAS, MENOS;
+precedence left POR, DIV;
+
+
+start with INICIO;
+
+//Reglas Semanticas
+
+INICIO ::=  SEPARADOR_PROGRAMA includs_code codigo;
+
+
+includs_code ::= includs includs_code
+                |;
+
+codigo ::=   struc_vars codigo
+            |struc_function codigo
+            |mensaje codigo
+            |comentarios codigo
+            |;
+
+codigo_funcion ::=   struc_vars codigo_funcion
+                    |struc_ciclos codigo_funcion
+                    |struc_if codigo_funcion
+                    |struc_switch codigo_funcion
+                    |mensaje codigo_funcion
+                    |comentarios codigo_funcion
+                    |SCANF TEXTO struc_scanf PARENTESIS_C PUNTO_COMA codigo_funcion
+                    |GETCH PUNTO_COMA codigo_funcion
+                    |ANDPERSAND codigo_funcion
+                    |CLEARS PUNTO_COMA codigo_funcion
+                    |IDENTIFICADOR struc_llamada PUNTO_COMA codigo_funcion
+                    |;
+
+struc_llamada ::= PUNTO IDENTIFICADOR struc_llamada
+                |PUNTO IDENTIFICADOR PARENTESIS_A parametros_llamada PARENTESIS_C;
+
+parametros_llamada ::= valor val_llamada
+                        |;
+
+val_llamada ::= COMA valor val_llamada
+                |;
+
+comentarios ::=  COMENTARIO_SIMPLE
+                |COMENTARIO_VARIOS;
+
+
+includs ::=  INCLUDE MENOR_QUE IDENTIFICADOR identificador_include MAYOR_QUE 
+            |INCLUDE TEXTO;
+
+identificador_include ::= PUNTO IDENTIFICADOR parentesis 
+                        |PUNTO IDENTIFICADOR identificador_include
+                        |PUNTO IDENTIFICADOR;
+
+parentesis ::= PARENTESIS_A PARENTESIS_C;
+
+struc_vars ::=   INT struc_asig_vars_n PUNTO_COMA
+                |FLOAT struc_asig_vars_n PUNTO_COMA
+                |CHAR struc_asig_vars_c PUNTO_COMA
+                |CONSTANTE struc_constante
+                |IDENTIFICADOR IGUAL var_senten PUNTO_COMA
+                |IDENTIFICADOR struc_dim_arreglo IGUAL var_senten PUNTO_COMA;
+
+var_senten ::=  valor
+               |IDENTIFICADOR struc_llamada;
+
+struc_constante ::=  INT struc_asig_vars_n PUNTO_COMA
+                    |FLOAT struc_asig_vars_n PUNTO_COMA
+                    |CHAR struc_asig_vars_c PUNTO_COMA;
+
+struc_dim_arreglo ::= CORCHETE_A valor CORCHETE_C struc_dim_arreglo
+                    |CORCHETE_A valor CORCHETE_C;
+
+struc_asig_vars_n ::=    IDENTIFICADOR IGUAL valor_n COMA struc_asig_vars_n
+                        |IDENTIFICADOR COMA struc_asig_vars_n
+                        |IDENTIFICADOR IGUAL valor_n
+                        |IDENTIFICADOR struc_arreglo
+                        |IDENTIFICADOR;
+
+struc_asig_vars_c ::=    IDENTIFICADOR IGUAL valor_c COMA struc_asig_vars_c
+                        |IDENTIFICADOR COMA struc_asig_vars_c
+                        |IDENTIFICADOR IGUAL valor_c
+                        |IDENTIFICADOR;
+
+struc_arreglo ::=    CORCHETE_A valor_int CORCHETE_C struc_arreglo
+                    |CORCHETE_A valor_int CORCHETE_C;
+
+struc_ciclos ::= struct_for
+                |struct_do_while
+                |struct_while;
+
+struct_for ::= FOR PARENTESIS_A struc_indices PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C;
+
+struc_indices ::= IDENTIFICADOR IGUAL valor_n PUNTO_COMA IDENTIFICADOR valor_comprobacion PUNTO_COMA IDENTIFICADOR struc_a;
+
+valor_c ::=  valor_c MAS valor_c
+            |valor_c MENOS valor_c
+            |valor_c POR valor_c
+            |valor_c DIV valor_c
+            |valor_c MODULO valor_c
+            |PARENTESIS_A valor_c PARENTESIS_C
+            |IDENTIFICADOR
+            |VALOR
+            |NUMERO
+            |DECIMAL;
+
+valor_n ::=  valor_n MAS valor_n
+            |valor_n MENOS valor_n
+            |valor_n POR valor_n
+            |valor_n DIV valor_n
+            |valor_n MODULO valor_n
+            |PARENTESIS_A valor_n PARENTESIS_C
+            |IDENTIFICADOR
+            |NUMERO
+            |DECIMAL;
+
+valor_int ::=    valor_int MAS valor_int
+                |valor_int MENOS valor_int
+                |valor_int POR valor_int
+                |valor_int DIV valor_int
+                |valor_int MODULO valor_int
+                |PARENTESIS_A valor_int PARENTESIS_C
+                |IDENTIFICADOR
+                |NUMERO;
+
+valor_comprobacion ::=   MENOR_QUE valor_n
+                        |MAYOR_QUE valor_n
+                        |MENOR_IGUAL valor_n
+                        |MAYOR_IGUAL valor_n
+                        |IGUAL_IGUAL valor_n
+                        |DIFERENTE valor_n;
+
+valor ::=    valor MAS valor
+            |valor MENOS valor
+            |valor POR valor
+            |valor DIV valor
+            |valor MODULO valor
+            |PARENTESIS_A valor PARENTESIS_C
+            |IDENTIFICADOR
+            |IDENTIFICADOR CORCHETE_A valor CORCHETE_C
+            |VALOR
+            |NUMERO
+            |DECIMAL;
+
+struc_a ::=  IGUAL valor_n 
+            |MAS_MAS 
+            |MENOS_MENOS; 
+
+
+struct_while ::= WHILE PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C ;
+
+struct_do_while ::= DO LLAVES_A codigo_funcion LLAVES_C WHILE PARENTESIS_A struc_condicional PARENTESIS_C PUNTO_COMA;
+
+valor_condicional ::=    valor MENOR_QUE valor
+                        |valor MAYOR_QUE valor
+                        |valor MENOR_IGUAL valor
+                        |valor MAYOR_IGUAL valor
+                        |valor IGUAL_IGUAL valor
+                        |valor DIFERENTE valor
+                        |PARENTESIS_A valor_condicional PARENTESIS_C;
+
+
+struc_condicional ::= struc_logico_not  valor_condicional struc_logico;
+
+struc_logico ::= AND struc_logico_not  valor_condicional struc_logico
+                |OR struc_logico_not  valor_condicional struc_logico
+                | ;
+
+struc_logico_not ::= NOT
+                    |;
+
+struc_if ::= IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C struc_else;
+
+struc_else ::=   ELSE IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C struc_else
+                |ELSE LLAVES_A codigo_funcion LLAVES_C
+                | ;
+
+struc_switch ::= SWITCH PARENTESIS_A IDENTIFICADOR PARENTESIS_C LLAVES_A struc_case LLAVES_C;
+
+struc_case ::=   CASE valor_case DOS_PUNTOS codigo_funcion BREAK PUNTO_COMA struc_case
+                |CASE valor_case DOS_PUNTOS codigo_funcion BREAK PUNTO_COMA
+                |DEFAULT DOS_PUNTOS codigo_funcion;
+
+valor_case ::=   VALOR
+                |NUMERO
+                |DECIMAL;
+
+struc_function ::=  VOID IDENTIFICADOR PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C
+                   |vars PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion RETURN valor PUNTO_COMA LLAVES_C ;
+
+struc_params ::= struc_vars_params params
+                |;
+
+params ::=   COMA struc_vars_params params
+            |;
+
+struc_vars_params ::=    INT IDENTIFICADOR
+                        |FLOAT IDENTIFICADOR
+                        |CHAR IDENTIFICADOR;
+
+vars ::=     INT
+            |FLOAT
+            |CHAR;
+
+mensaje ::= PRINTF valor_m struc_printf PARENTESIS_C PUNTO_COMA;
+
+valor_m ::=  valor_m MAS valor_m
+            |valor_m MENOS valor_m
+            |valor_m POR valor_m
+            |valor_m DIV valor_m
+            |PARENTESIS_A valor_m PARENTESIS_C
+            |IDENTIFICADOR CORCHETE_A valor_m CORCHETE_C
+            |IDENTIFICADOR
+            |TEXTO
+            |VALOR
+            |NUMERO
+            |DECIMAL;
+
+struc_printf ::= COMA ANDPERSAND IDENTIFICADOR struc_printf
+                |COMA IDENTIFICADOR struc_printf
+                |;
+
+struc_scanf ::= COMA ANDPERSAND IDENTIFICADOR struc_scanf
+                |COMA IDENTIFICADOR struc_scanf
+                |;

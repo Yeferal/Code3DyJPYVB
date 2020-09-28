@@ -38,7 +38,7 @@ Siguiente       = (" _\n")+
 
 <YYINITIAL> {
     "%%VB"("\n"|"")                                      {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_VB , yycolumn, yyline, yytext());}
-    ("%%JAVA" "\n" ({LqSea}|.|"\n")*)("%%PY" "\n" ({LqSea}|.|"\n")*)("%%PROGRAMA" "\n" ({LqSea}|.)*)                 {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
+    ("%%JAVA" "\n" ({LqSea}|.|"\n")*)("%%PY" "\n" ({LqSea}|.|"\n")*)("%%PROGRAMA" "\n" ({LqSea}|.|"\n")*)                 {System.out.println(yytext()); return new Symbol(SimbolosVB.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
     "\n"                                        {System.out.println(yytext()); return new Symbol(SimbolosVB.SALTO , yycolumn, yyline, yytext());}
     //(" _\n"|"\b_\n")                            {System.out.println(yytext()); return new Symbol(SimbolosVB.SALTO_SEGUIDO , yycolumn, yyline, yytext());}
 
@@ -82,6 +82,7 @@ Siguiente       = (" _\n")+
     "MsgBox("               {System.out.println("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
     "MessageBox("         {System.out.println("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
     "Console.WriteLine("    {System.out.println("Mensaje console: "+yytext()); return new Symbol(SimbolosVB.CONSOLE_WRT , yycolumn, yyline, yytext());}
+    "Print"    {System.out.println("Print: "+yytext()); return new Symbol(SimbolosVB.PRINT , yycolumn, yyline, yytext());}
     
     //Solicitud de Datos
     "intinput"                                  {System.out.println("intinput"); return new Symbol(SimbolosVB.INTINPUT , yycolumn, yyline, yytext());}

@@ -1,1 +1,164 @@
+//codigo usuario
+package analisis.py;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    
+    
+    private Symbol s;
+    public void syntaxError(Symbol s){
+        this.s = s;
+    }
+    public Symbol getS(Symbol s){
+        return this.s = s;
+    }
+
+    public void setAccion(String tipo,String mensaje,String accion){
+            System.out.println(tipo+"         "+mensaje);
+    }
+
+    public void syntax_error(Symbol s){
+            if(s!=null){
+                //ErrorG e = new ErrorG(s.right,s.left,(String) s.value,"Sintactico","Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                //listaErrores.add(e);
+                /*Error error = new Error((String) s.value,s.right, s.left, 2, "Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                erroresSintacticos.add(error);*/
+                setAccion("ERROR","Error Sintaxis token: Linea: " + (s.right+1) + ",   Columna: " + (s.left+1) + ",  Simbolo: " + s.value, "");
+            }
+    }
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal SEPARADOR_PY, SEPARADOR_PROGRAMA, AND, OR, NOT, MAS, MENOS, POT, POR;
+terminal DIV_ENTERA, DIV, MENOR_QUE, MAYOR_QUE, MENOR_IGUAL, MAYOR_IGUAL, DIV_ENTERO;
+terminal IGUAL_IGUAL, DIFERENTE, COMENTARIO_SIMPLE, COMENTARIO_VARIOS, PRINT;
+terminal INTINPUT, FLOATINPUT, CHARINPUT, FOR, IN, GUION_BAJO, WHILE, IF, ELSE;
+terminal ELSE_IF, BREAK, DEF, RETURN, IDENTIFICADOR, NUMERO, VALOR, TEXTO, SALTO;
+terminal TAB, IGUAL, DOS_PUNTOS, CORCHETE_A, CORCHETE_C, LLAVES_A, LLAVES_C;
+terminal COMA, PARENTESIS_A, PARENTESIS_C;
+//terminal ;
+
+
+
+// declaracion no terminales
+non terminal INICIO, declaracion_var, codigo, valor, funcion, codigo_def, tabs;
+non terminal ciclos, struct_for, datos_for, dato, mas_datos, struct_while;
+non terminal condicion, condiciones, pre, not, condicionales, struc_if, solicitud;
+non terminal mensajes, parametros, params, codigo_inicio, val, valor_tipo;
+//non terminal ;
+
+//presedencia de menor a mayor
+precedence left MAS, MENOS, COMA;
+precedence left POR, DIV, DIV_ENTERO;
+precedence left POT;
+
+start with INICIO;
+
+//Reglas Semanticas
+
+INICIO ::=   SEPARADOR_PY codigo_inicio SEPARADOR_PROGRAMA;
+
+declaracion_var ::= IDENTIFICADOR IGUAL valor_tipo SALTO;
+
+valor_tipo ::= valor
+                |solicitud;
+
+codigo_inicio ::= tabs codigo
+                |;
+
+codigo ::=   funcion codigo_inicio
+            |declaracion_var codigo_inicio
+            |ciclos codigo_inicio
+            |condicionales codigo_inicio
+            |mensajes codigo_inicio
+            |solicitud SALTO codigo_inicio
+            |SALTO codigo_inicio;
+
+valor ::=    valor MAS valor
+            |valor COMA valor
+            |valor MENOS valor
+            |valor POR valor
+            |valor DIV valor
+            |valor DIV_ENTERO valor
+            |valor POT valor
+            |PARENTESIS_A valor PARENTESIS_C
+            |IDENTIFICADOR
+            |VALOR
+            |TEXTO
+            |NUMERO;
+
+funcion ::= DEF IDENTIFICADOR PARENTESIS_A parametros PARENTESIS_C DOS_PUNTOS SALTO;
+
+parametros ::=   IDENTIFICADOR params
+                |;
+
+params ::=   COMA IDENTIFICADOR
+            |;
+
+codigo_def ::= declaracion_var;
+
+tabs ::= TAB tabs
+        |;
+
+ciclos ::=   struct_for
+            |struct_while;
+
+struct_for ::=   FOR IDENTIFICADOR IN datos_for DOS_PUNTOS SALTO
+                |FOR GUION_BAJO IN datos_for DOS_PUNTOS SALTO;
+
+datos_for ::=    TEXTO
+                |NUMERO
+                |CORCHETE_A dato mas_datos CORCHETE_C;
+
+dato ::= TEXTO
+        |NUMERO;
+
+mas_datos ::= COMA dato mas_datos
+            | ;
+
+struct_while ::= WHILE condicion DOS_PUNTOS SALTO;
+
+
+condicion ::= not condiciones pre;
+
+condiciones ::=  valor MENOR_QUE valor
+                |valor MAYOR_QUE valor
+                |valor MENOR_IGUAL valor
+                |valor MAYOR_IGUAL valor
+                |valor IGUAL_IGUAL valor
+                |valor DIFERENTE valor
+                |PARENTESIS_A condiciones PARENTESIS_C;
+
+pre ::= AND not condiciones pre
+        |OR not condiciones pre
+        |;
+
+not ::=  NOT 
+        |;
+
+condicionales ::= struc_if;
+
+struc_if ::= IF condicion DOS_PUNTOS SALTO
+            |ELSE_IF condicion DOS_PUNTOS SALTO
+            |ELSE;
+
+mensajes ::= PRINT val PARENTESIS_C SALTO;
+
+solicitud ::=    INTINPUT PARENTESIS_A val PARENTESIS_C
+                |FLOATINPUT PARENTESIS_A val PARENTESIS_C
+                |CHARINPUT PARENTESIS_A val PARENTESIS_C;
+
+val ::= valor
+        |;
 

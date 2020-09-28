@@ -9,6 +9,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -29,16 +30,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private void agregarPestania(ArchivoExtension archivoExtension){
         
         JScrollPane j = new JScrollPane();
-            JTextArea jArea = new JTextArea();
+            JTextPane jArea = new JTextPane();
             jArea.addCaretListener(new CaretListener() {
                 @Override
                 public void caretUpdate(CaretEvent e) {
-                    JTextArea editArea = (JTextArea) e.getSource();
+                    JTextPane editArea = (JTextPane) e.getSource();
                     int linea = 1,columna = 1;
                     try {
                         int carePos = editArea.getCaretPosition();
-                        linea = editArea.getLineOfOffset(carePos);
-                        columna = carePos - editArea.getLineStartOffset(linea);
+                        //linea = editArea.getLineOfOffset(carePos);
+                        //columna = carePos - editArea.getLineStartOffset(linea);
                         linea +=1;
                         columna +=1;
                     } catch (Exception ex) {
@@ -73,7 +74,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                     String nombre = JOptionPane.showInputDialog("Escribe el nombre del Archivo");
                     String ruta = file.getPath()+DIAGONAL+nombre+"."+listaArchivos.get(indicePetania).getExtension();
                     JScrollPane jAux = (JScrollPane) tabbedPanelCode.getComponent(indicePetania);
-                    JTextArea areaAux = (JTextArea) jAux.getViewport().getComponent(0);
+                    JTextPane areaAux = (JTextPane) jAux.getViewport().getComponent(0);
                     archivo.crearArchivo(ruta, areaAux.getText());
                     listaArchivos.get(indicePetania).setNombre(nombre+"."+listaArchivos.get(indicePetania).getExtension());
                     listaArchivos.get(indicePetania).setPath(ruta);
@@ -82,7 +83,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             }else{
                 String ruta = listaArchivos.get(indicePetania).getPath();
                 JScrollPane jAux = (JScrollPane) tabbedPanelCode.getComponent(indicePetania);
-                JTextArea areaAux = (JTextArea) jAux.getViewport().getComponent(0);
+                JTextPane areaAux = (JTextPane) jAux.getViewport().getComponent(0);
                 archivo.crearArchivo(ruta, areaAux.getText());
                 JOptionPane.showMessageDialog(null, "Se actualizo el nuevo archivo");
             }
@@ -91,16 +92,16 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     
     private void abrirArchivo(ArchivoExtension archivoExtension){
         JScrollPane j = new JScrollPane();
-            JTextArea jArea = new JTextArea();
+            JTextPane jArea = new JTextPane();
             jArea.addCaretListener(new CaretListener() {
                 @Override
                 public void caretUpdate(CaretEvent e) {
-                    JTextArea editArea = (JTextArea) e.getSource();
+                    JTextPane editArea = (JTextPane) e.getSource();
                     int linea = 1,columna = 1;
                     try {
                         int carePos = editArea.getCaretPosition();
-                        linea = editArea.getLineOfOffset(carePos);
-                        columna = carePos - editArea.getLineStartOffset(linea);
+                        //linea = editArea.getLineOfOffset(carePos);
+                        //columna = carePos - editArea.getLineStartOffset(linea);
                         linea +=1;
                         columna +=1;
                     } catch (Exception ex) {
@@ -133,7 +134,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
             String nombre = JOptionPane.showInputDialog("Escribe el nombre del Archivo");
             String ruta = file.getPath()+DIAGONAL+nombre+"."+listaArchivos.get(indicePetania).getExtension();
             JScrollPane jAux = (JScrollPane) tabbedPanelCode.getComponent(indicePetania);
-            JTextArea areaAux = (JTextArea) jAux.getViewport().getComponent(0);
+            JTextPane areaAux = (JTextPane) jAux.getViewport().getComponent(0);
             archivo.crearArchivo(ruta, areaAux.getText());
             JOptionPane.showMessageDialog(null, "Se Guardo el nuevo archivo");
         }
