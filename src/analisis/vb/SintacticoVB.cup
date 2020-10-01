@@ -1,11 +1,22 @@
 //codigo usuario
 package analisis.vb;
+import comprobaciones.ComprobadorAmbito;
+import comprobaciones.ComprobadorTipos;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
+import simbolos.Simbolo;
+import simbolos.TablaSimbolos;
+import errores.ErrorG;
 
 //Codigo para el parser, variables, metodos
 parser code
 {:
+    
+    public TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    
+    
+    
     
     
     private Symbol s;
@@ -36,7 +47,13 @@ parser code
 
 action code
 {:
-    
+    ComprobadorTipos comprobadorTipos = new ComprobadorTipos();
+    ComprobadorAmbito comprobadorAmbito = new ComprobadorAmbito();
+    ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    int ambitoFlag = 0;
+    String tipoV = "";
+    ArrayList<Integer> ambitos = new ArrayList<>();
+    TablaSimbolos tablaSimbolos = new TablaSimbolos();
 :}
 
 //Declaraciones 
@@ -74,7 +91,7 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_VB codigo SEPARADOR_PROGRAMA
+INICIO ::=   SEPARADOR_VB {:ambitoFlag=0;:} codigo SEPARADOR_PROGRAMA {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:}
             |WHILE;
 
 /*codigo ::=   COMENTARIO
@@ -87,32 +104,53 @@ codigo ::=   struc_funciones codigo
             |SALTO codigo
             |; 
 
-bloque_declararion_var ::=   DIM IDENTIFICADOR tipo_declaracion
-                            |DIM IDENTIFICADOR IGUAL s4
-                            |IDENTIFICADOR IGUAL s4 ;
+bloque_declararion_var ::=   DIM IDENTIFICADOR:b tipo_declaracion:a {:Simbolo aux = (Simbolo)a;
+                            Simbolo s = new Simbolo((String)b,aux.getTipo(),ambitoFlag,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = aux;
+                        :}
+                            |DIM IDENTIFICADOR:b IGUAL s4:a {:
+                            Simbolo s = new Simbolo((String)b," ",ambitoFlag,a);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                        :}
+                            |IDENTIFICADOR:a IGUAL s4:b  {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
+                        :};
 
-s4 ::=   operacion
-        |inputs_dato;
+s4 ::=   operacion:a {:RESULT = a;:}
+        |inputs_dato:a {:RESULT = a;:};
 
-tipo_declaracion ::= var_identificadores
+tipo_declaracion ::= var_identificadores:a {:RESULT = a;:}
                     |AS tipo_datos IGUAL s4;
 
-var_identificadores ::=  COMA IDENTIFICADOR var_identificadores
-                        |AS tipo_datos;
+var_identificadores ::=  COMA IDENTIFICADOR:b var_identificadores:a {:Simbolo aux = (Simbolo)a;
+                            Simbolo s = new Simbolo((String)b,aux.getTipo(),ambitoFlag,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = aux;
+                        :}
+                        |AS tipo_datos:a {:Simbolo s = new Simbolo(null,(String)a,0,""); RESULT = s;:};
 
-tipo_datos ::=   INTEGER
-                |DECIMAL_R
-                |CHART;
+tipo_datos ::=   INTEGER {:RESULT = "Int";:}
+                |DECIMAL_R {:RESULT = "Float";:}
+                |CHART {:RESULT = "Char";:};
 
 valor ::=    NUMERO
             |DECIMAL
             |VALOR;
 
-struc_funciones ::= FUNCTION IDENTIFICADOR s5 RETURN operacion SALTO END FUNCTION SALTO;
+struc_funciones ::= FUNCTION IDENTIFICADOR {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s5 RETURN operacion SALTO END FUNCTION {:comprobadorAmbito.sacarAmbito();:} SALTO;
 
-struc_modulos ::= PUBLIC MODULE IDENTIFICADOR SALTO s7 END MODULE;
+struc_modulos ::= PUBLIC MODULE IDENTIFICADOR SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s7 END MODULE {:comprobadorAmbito.sacarAmbito();:};
 
-struc_procedimientos ::= PUBLIC SUB IDENTIFICADOR s6 END SUB SALTO;
+struc_procedimientos ::= PUBLIC SUB IDENTIFICADOR {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s6 END SUB {:comprobadorAmbito.sacarAmbito();:} SALTO;
 
 s5 ::=   PARENTESIS_A parametros PARENTESIS_C AS tipo_datos SALTO sentencias
         |PARENTESIS_A PARENTESIS_C AS tipo_datos SALTO sentencias ;
@@ -130,13 +168,17 @@ s7 ::=   bloque_declararion_var s7
 s9 ::= SALTO s9
         |;
 
-parametros ::=   IDENTIFICADOR AS tipo_datos COMA parametros
-                |IDENTIFICADOR AS tipo_datos;
+parametros ::=   IDENTIFICADOR:a AS tipo_datos:b {::} COMA parametros
+                |IDENTIFICADOR:a AS tipo_datos:b {:Simbolo s = new Simbolo((String)a,(String)b,ambitoFlag,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                :};
 
-struc_ciclos ::= struc_for
-                |struc_while;
+struc_ciclos ::= struc_for {:comprobadorAmbito.sacarAmbito();:}
+                | {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} struc_while {:comprobadorAmbito.sacarAmbito();:};
 
-struc_for ::= FOR IDENTIFICADOR IGUAL operacion TO operacion opcion_step SALTO s8 NEXT IDENTIFICADOR SALTO;
+struc_for ::= FOR IDENTIFICADOR IGUAL operacion TO operacion opcion_step SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 NEXT IDENTIFICADOR SALTO;
 
 opcion_step ::=   STEP operacion
                 |;
@@ -147,18 +189,18 @@ struc_while ::=  WHILE condicionales SALTO s8 WEND SALTO
                 |DO WHILE condicionales SALTO s8 LOOP
                 |DO UNTIL condicionales SALTO s8 LOOP;
 
-struc_if ::= IF condicionales THEN SALTO s8 struc_else_if END IF SALTO;
+struc_if ::= IF condicionales THEN SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 struc_else_if END IF SALTO {:comprobadorAmbito.sacarAmbito();:};
 
-struc_else_if ::=    ELSE SALTO s8 struc_else_if
-                    |ELSE_IF condicionales THEN SALTO s8 struc_else_if
+struc_else_if ::=    ELSE SALTO {:comprobadorAmbito.sacarAmbito(); ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8  {:comprobadorAmbito.sacarAmbito();:}
+                    |ELSE_IF {:comprobadorAmbito.sacarAmbito();ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} condicionales THEN SALTO s8 struc_else_if
                     |;
 
-struc_select ::= SELECT IDENTIFICADOR SALTO casos END SELECT SALTO
-                |SELECT CASE IDENTIFICADOR SALTO casos END SELECT SALTO;
+struc_select ::= SELECT IDENTIFICADOR SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} casos END SELECT SALTO {:comprobadorAmbito.sacarAmbito();:}
+                |SELECT CASE IDENTIFICADOR SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} casos END SELECT SALTO {:comprobadorAmbito.sacarAmbito();:};
 
-casos ::=    CASE operacion s2 SALTO s8 s1
-            |CASE operacion TO operacion SALTO s8 s1
-            |CASE ELSE SALTO s8;
+casos ::=    CASE operacion s2 SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:comprobadorAmbito.sacarAmbito();:} s1
+            |CASE operacion TO operacion SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:comprobadorAmbito.sacarAmbito();:} s1
+            |CASE ELSE SALTO {:ambitoFlag++;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 ;
 
 s1 ::=   casos
         |;

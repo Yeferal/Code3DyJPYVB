@@ -1,16 +1,44 @@
 %%VB
 
-Public Sub Saludo()
-    Dim i= 2+5*(5*2)
-    Print "Segundo Proyecto de Compiladores 2"
-    Print("Segundo Proyecto de Compiladores 2")
-
-End Sub 
-
+public sub hola()
+    Dim N as integer
+    Dim Fact, Num As Integer
+    Num = N
+    If N = 0 Then
+    	Dim hola as integer
+        Factorial = 1
+    ELSEIF N < 0 THEN
+	dim hola as integer
+    ELSEIF N > 0 THEN
+    	dim hola as integer    	
+    Else
+        Dim como as integer
+        Fact = 1
+        While N > 1
+            Dim fact as integer
+            Fact = como * N
+            N = N - 1
+       	wENd
+	Factorial = Fact
+	Select CASE como
+            CASE 8
+		Dim como as integer
+            CASE 9
+		dim como as integer
+            CASE else
+		dim como as integer
+	END select
+    End If
+    FOR c = 8 To 15
+    	dim character as char
+    	if Num < 0 THEN 
+            dim como as integer
+        end if
+    next c
+End sub
 
 Function Factorial(N As Integer) as integer
-
-    'Dim Fact, Num As Integer
+    Dim Fact, Num As Integer
     Num = N
     If N = 0 Then
 	Factorial = 1
@@ -19,10 +47,22 @@ Function Factorial(N As Integer) as integer
         Do
             Fact = Fact * N
             N = N - 1
-       Loop While N > 1
+                Dim Fact, Num As Integer
+    		Num = N
+    		If N = 0 Then
+                    Factorial = 1
+    		Else
+                    Fact = 1
+                    Do
+                        Fact = Fact * N
+            		N = N - 1
+                    Loop While N > 1
+                    Factorial = Fact
+    		End If
+	Loop While N > 1
 	Factorial = Fact
     End If
-    Return 10
+    Return 0
 End Function
 
 %%JAVA
@@ -97,7 +137,3 @@ void main()
 
   getch();
 }
-
-
-
-

@@ -10,6 +10,7 @@ import analisis.py.AnalizadorSintacticoPY;
 import analisis.vb.AnalizadorLexicoVB;
 import analisis.vb.AnalizadorSintacticoVB;
 import archivos.Archivo;
+import comprobaciones.ComprobadorTipos;
 import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,7 +25,7 @@ public class Main {
         ventanaPrincipal.setVisible(true);
         Archivo ar = new Archivo();
 //        String texto = "while";
-        String texto = ar.leerArchivo("src/prueba.mlg");
+        String texto = ar.leerArchivo("src/prueba2.mlg");
         
         //System.out.println(texto);
         
@@ -45,20 +46,27 @@ public class Main {
         AnalizadorLexicoCPP analizadorLexicoCPP = new AnalizadorLexicoCPP(new StringReader(texto));
         AnalizadorSintacticoCPP analizadorSintacticoCPP = new AnalizadorSintacticoCPP(analizadorLexicoCPP);
         try {
-            //analizadorSintacticoVB.parse();
+            analizadorSintacticoVB.parse();
             //analizadorSintacticoJAVA.parse();
             //analizadorSintacticoPY.parse();
-            analizadorSintacticoCPP.parse();
+            //analizadorSintacticoCPP.parse();
             System.out.println("\n==>TERMINO<==\n\n");
+            analizadorSintacticoVB.tablaSimbolos.pintar();
         } catch (Exception ex) {
             //ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         
-        
-        
-        
+        for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
+            System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
+        }
+        ComprobadorTipos c = new ComprobadorTipos();
+        c.isNumero("55.00");
+        c.isFloat("555");
+        c.isFloat("5.3");
+        c.isInteger("33");
+        c.isInteger("56.5");
         
     }
     

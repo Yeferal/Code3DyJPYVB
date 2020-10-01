@@ -1,0 +1,125 @@
+public sub hola()
+	Dim N as integer
+	Dim Fact, Num As Integer
+	Num = N
+    	If N = 0 Then
+    		Dim hola as integer
+		Factorial = 1
+	ELSEIF N < 0 THEN
+		dim hola as integer
+	ELSEIF N > 0 THEN
+		dim hola as integer    	
+    	Else
+    		Dim como as integer
+        	Fact = 1
+        	While N > 1
+        		Dim fact as integer
+        		Fact = como * N
+            		N = N - 1
+       	ENd while
+		Factorial = Fact
+		Select CASE como
+			CASE 8
+				Dim como as integer
+			CASE 9
+				dim como as integer
+			CASE else
+				dim como as integer
+		END select
+    	End If
+    	FOR c as integer = 8 To 15
+    		dim character as char
+    		if Num < 0 THEN dim como as integer
+    	next c
+End sub
+
+Function Factorial(N As Integer) as integer
+    Dim Fact, Num As Integer
+    Num = N
+    If N = 0 Then
+	Factorial = 1
+    Else
+        Fact = 1
+        Do
+            Fact = Fact * N
+            N = N - 1
+               Dim Fact, Num As Integer
+    		Num = N
+    		If N = 0 Then
+			Factorial = 1
+    		Else
+        		Fact = 1
+        		Do
+            			Fact = Fact * N
+            			N = N - 1
+       		Loop While N > 1
+			Factorial = Fact
+    		End If
+	Loop While N > 1
+	Factorial = Fact
+    End If
+    Return 0
+End Function
+
+Error de Sintaxis: 
+	Linea #:                 << 7 >>
+	Columna #                << 3 >>
+	Token NO Reconocido:     << Factorial >>
+	Mensaje (Informacion): 
+		-> Error no se encuentra definida la variable
+
+Error de Sintaxis: 
+	Linea #:                 << 23 >>
+	Columna #                << 9 >>
+	Token NO Reconocido:     << como >>
+	Mensaje (Informacion): 
+		-> Ya se encuentra definida la variable: < como >
+DECLARACION null
+
+Error de Sintaxis: 
+	Linea #:                 << 25 >>
+	Columna #                << 9 >>
+	Token NO Reconocido:     << como >>
+	Mensaje (Informacion): 
+		-> Ya se encuentra definida la variable: < como >
+
+Error de Sintaxis: 
+	Linea #:                 << 27 >>
+	Columna #                << 9 >>
+	Token NO Reconocido:     << como >>
+	Mensaje (Informacion): 
+		-> Ya se encuentra definida la variable: < como >
+
+Error de Sintaxis: 
+	Linea #:                 << 40 >>
+	Columna #                << 2 >>
+	Token NO Reconocido:     << Factorial >>
+	Mensaje (Informacion): 
+		-> Error no se encuentra definida la variable
+
+Error de Sintaxis: 
+	Linea #:                 << 46 >>
+	Columna #                << 20 >>
+	Token NO Reconocido:     << Fact >>
+	Mensaje (Informacion): 
+		-> Ya se encuentra definida la variable: < Fact >
+
+Error de Sintaxis: 
+	Linea #:                 << 46 >>
+	Columna #                << 20 >>
+	Token NO Reconocido:     << Num >>
+	Mensaje (Informacion): 
+		-> Ya se encuentra definida la variable: < Num >
+DECLARACION []
+
+Error de Sintaxis: 
+	Linea #:                 << 49 >>
+	Columna #                << 4 >>
+	Token NO Reconocido:     << Factorial >>
+	Mensaje (Informacion): 
+		-> Error no se encuentra definida la variable
+
+TABLA DE SIMBOLOS
+
+hola				Metodo				proyectofinal.ctdoa.backend.objetos.Metodo@3d646c37
+Factorial			Funcion			proyectofinal.ctdoa.backend.objetos.Funcion@27fa135a

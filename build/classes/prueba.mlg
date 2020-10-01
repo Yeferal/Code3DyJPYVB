@@ -1,8 +1,9 @@
 %%VB
 
 Public Sub Saludo()
-
+    Dim i= 2+5*(5*2)
     Print "Segundo Proyecto de Compiladores 2"
+    Print("Segundo Proyecto de Compiladores 2")
 
 End Sub 
 

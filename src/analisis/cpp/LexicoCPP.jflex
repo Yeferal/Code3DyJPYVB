@@ -7,6 +7,10 @@ import java.util.ArrayList;
     //coidgo de usuario en sintaxis java
     //public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
 
+    public void pintar(String s){
+        System.out.println(yytext());
+    }
+
 %}
 
     //directivas
