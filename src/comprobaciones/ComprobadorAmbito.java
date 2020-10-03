@@ -18,6 +18,13 @@ public class ComprobadorAmbito {
         }
     }
     
+    public int getAmbitoActual(){
+        if(ambitosCamino.size()!=0){
+            return ambitosCamino.get(ambitosCamino.size()-1);
+        }
+        return 0;
+    }
+    
     /*busca que no existe una variable en el mismo ambito o que pertenezca al conjunto de ambitos*/
     public boolean verificarVariable(ArrayList<Simbolo> listaSimbolos, Simbolo s){
         System.out.println("-----------------------------"+ambitosCamino+"--entre--: "+s.getNombre()+"---ambito: "+s.getAmbito());

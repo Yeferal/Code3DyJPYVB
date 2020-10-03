@@ -61,9 +61,9 @@ public class Simbolo {
     
     public String toString(){
         if(objeto==null){
-            return nombre+"\t\t"+tipo+"\t\t"+ambito+"\t\t"+" ";
+            return nombre+"\t\t"+tipo+"\t\t"+ambito+"\t\t"+"---";
         }
-        return nombre+"\t\t"+tipo+"\t\t"+ambito+"\t\t"+objeto.toString();
+        return nombre+"\t\t"+tipo+"\t\t"+ambito+"\t\t"+objeto;
     }
     
     

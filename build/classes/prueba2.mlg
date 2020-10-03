@@ -2,8 +2,12 @@
 
 public sub hola()
     Dim N as integer
+    Dim c as integer
+    Dim f as float
     Dim Fact, Num As Integer
+    N = 10
     Num = N
+    f = 5/(1+1)
     If N = 0 Then
     	Dim hola as integer
         Factorial = 1
@@ -13,6 +17,7 @@ public sub hola()
     	dim hola as integer    	
     Else
         Dim como as integer
+        como = 5
         Fact = 1
         While N > 1
             Dim fact as integer
@@ -69,20 +74,115 @@ End Function
 public class algo{
 
 	public int holaMundo() {
+            System.out.println("asasasd");
+            int entero = 10;
+            int a,b=5,s;
+            char cx,ch = 'd';
+            //float ff = 22.5;
+            //int entero = 10;
+            char ch = 'd';
+            
+            z = 20;
+            if ((b+5)==5 && ff<50) {
+                while (entero<20) {                
+                    entero = entero +3;
+                }
+                float ff = 22.5;
+            }else{
+                for (int i = 0; i < 5; i++) {
+                    System.out.println("Hola: "+entero);
+                }
+            }
+            ff = 2.2;
+            switch(ch){
+                case 'd':
+                    System.out.println("d");
+                    break;
+                case 'c':
+                    System.out.println("c");
+                    break;
+
+            }
+            return 2;
+	}
+        
+        public int holaMundo2(int a) {
 		System.out.println("asasasd");
-                return 2;
+                if (5<6) {
+                        return 0;
+		}
+                return a;
+               
+        }
+
+        public int holaMundo3(int a) {
+		System.out.println("asasasd");
+		if (5<6) {
+			a = b;
+			for(int i = 0; i < 6; i++) {
+				int a = a;
+                                return 0;
+			}
+                        return 0;
+		} else if (6 == 6) {
+			int a;
+			while (id > 0) {
+				System.out.println("Hola " + id);
+				do {
+					if (id > 6) {
+					return 1;
+					} else {    
+                                            int a = a;
+                                        }
+				} while (6 == 6);
+			} 
+                        return 0;
+		} else {
+			switch(id) {
+				case 1: 
+					if(id < 1) {
+						System.out.println("Hoal mundo");
+					}			
+					break;
+				case 2:
+					while(dos == 0 && 6 > 6) {
+					}
+                                        break;
+				default:
+					int a = a;
+					int c = 6;
+			}
+			return 0;
+		}
 	}
 }
-
 %%PY
 
 def edadmeses(edad, meses):
     edad = intinput("Ingrese su edad:")
-        meses = edad * 12
+    meses = edad * 12
+    print("meses = ",meses)
+    #intinput("")
+    for i in [1,2,"h"]:
+        hola = 'c'
+        if 5<6:
+            g = 1
+        elif 10<1:
+            g = 2
+        else
+            h = 1
+            while h<10:
+                h= h+3
+    hola = 2
+
+
+def saludo():
+    edad = intinput("Ingrese su edad:")
+    meses = edad * 12
     print("meses = ",meses)
     intinput("")
-
-
+    hola = 2
+    j = 5
 
 %%PROGRAMA
 

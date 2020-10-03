@@ -46,7 +46,7 @@ Siguiente       = (" _\n")+
 
     //Tipo de Datos
     "Integer"                                   {pintar(yytext()); return new Symbol(SimbolosVB.INTEGER , yycolumn, yyline, yytext());}
-    "Decimal"                                   {pintar(yytext()); return new Symbol(SimbolosVB.DECIMAL_R , yycolumn, yyline, yytext());}
+    ("Decimal"|"float")                                    {pintar(yytext()); return new Symbol(SimbolosVB.DECIMAL_R , yycolumn, yyline, yytext());}
     ("Chart"|"Char")                                     {pintar(yytext()); return new Symbol(SimbolosVB.CHART , yycolumn, yyline, yytext());}
     
     //Reservadas
@@ -133,8 +133,8 @@ Siguiente       = (" _\n")+
     "As"                                        {pintar(yytext()); return new Symbol(SimbolosVB.AS , yycolumn, yyline, yytext());}
     ({Letra})("_"| {Letra}| {Numero})*          {pintar("id: "+yytext()); return new Symbol(SimbolosVB.IDENTIFICADOR , yycolumn, yyline, yytext());}
 
-    ({Numero}"."{Numero})                 {pintar("DECIMAL: "+yytext()); return new Symbol(SimbolosVB.DECIMAL , yycolumn, yyline, yytext());}
-    ({Numero})                            {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosVB.NUMERO , yycolumn, yyline, yytext());}
+    ({Numero}"."{Numero})                 {pintar("DECIMAL: "+yytext()); return new Symbol(SimbolosVB.DECIMAL , yycolumn, yyline, new Float(yytext()));}
+    ({Numero})                            {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosVB.NUMERO , yycolumn, yyline, new Integer(yytext()));}
     ("'"({LqSea}|.)*"'")                        {pintar(yytext()); return new Symbol(SimbolosVB.VALOR , yycolumn, yyline, yytext());}
     ("\""({LqSea}|.)*"\"")                      {pintar(yytext()); return new Symbol(SimbolosVB.VALOR , yycolumn, yyline, yytext());}
     

@@ -46,27 +46,58 @@ public class Main {
         AnalizadorLexicoCPP analizadorLexicoCPP = new AnalizadorLexicoCPP(new StringReader(texto));
         AnalizadorSintacticoCPP analizadorSintacticoCPP = new AnalizadorSintacticoCPP(analizadorLexicoCPP);
         try {
-            analizadorSintacticoVB.parse();
+            //analizadorSintacticoVB.parse();
             //analizadorSintacticoJAVA.parse();
-            //analizadorSintacticoPY.parse();
+            analizadorSintacticoPY.parse();
             //analizadorSintacticoCPP.parse();
             System.out.println("\n==>TERMINO<==\n\n");
+            System.out.println("Tabla Simbolos VB");
             analizadorSintacticoVB.tablaSimbolos.pintar();
+            System.out.println("\nTabla Simbolos JAVA");
+            analizadorSintacticoJAVA.tablaSimbolos.pintar();
+            System.out.println("\nTabla Simbolos PY");
+            analizadorSintacticoPY.tablaSimbolos.pintar();
         } catch (Exception ex) {
             //ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        
+        System.out.println("\nErrores VB");
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
         }
+        System.out.println("\nErrores JAVA");
+        for (int i = 0; i < analizadorSintacticoJAVA.erroresSemanticos.size(); i++) {
+            System.out.println(analizadorSintacticoJAVA.erroresSemanticos.get(i).toString());
+        }
+        System.out.println("\nErrores PY");
+        for (int i = 0; i < analizadorSintacticoPY.erroresSemanticos.size(); i++) {
+            System.out.println(analizadorSintacticoPY.erroresSemanticos.get(i).toString());
+        }
+        System.out.println("");
         ComprobadorTipos c = new ComprobadorTipos();
-        c.isNumero("55.00");
-        c.isFloat("555");
-        c.isFloat("5.3");
-        c.isInteger("33");
-        c.isInteger("56.5");
+        //c.isNumero("55.00");
+        //c.isFloat("555");
+        //c.isFloat("5.3");
+       // c.isInteger("33");
+        //c.isInteger("56.5");
+        
+        //Object o = 5.5/2;
+        //Object o1 = (float) 5.2;
+        //Integer i = (Integer) o;
+        //int in = 5/2;
+        //float g = (float) o1;
+        //System.out.println("Hola2: "+g+"\n");
+        int t = (int) 2.5;
+        c.tiparObjeto((float)5/2);
+        //float dx = (float) c.sumar((float)2.2,3);
+        //double xd = (float) dx;
+        //System.out.println("Hola: "+c.dividir(5,2));
+        //System.out.println("NUMERO: "+c.getTipoSimbolo(o));
+        
+        if (!(5<4)) {
+            System.out.println("BIENNNN");
+        }
         
     }
     

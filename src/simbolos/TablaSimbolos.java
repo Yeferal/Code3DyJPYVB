@@ -21,7 +21,7 @@ public class TablaSimbolos {
         listaSimbolos.add(s);
     }
     
-    public void setSimbolo(int pos, Object valor){
+    public void setSimbolo(Object valor){
         listaSimbolos.get(posicionSimbolo).setObjeto(valor);
     }
     
@@ -47,6 +47,16 @@ public class TablaSimbolos {
             }
         }
         return false;
+    }
+    
+    public Object getSimboloValor(){
+        Object o = listaSimbolos.get(posicionSimbolo).getObjeto();
+        return o;
+    }
+    
+    public Simbolo getSimbolo(){
+        Simbolo o = listaSimbolos.get(posicionSimbolo);
+        return o;
     }
     
 }

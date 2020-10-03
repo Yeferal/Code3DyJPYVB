@@ -1,12 +1,18 @@
 //codigo usuario
 package analisis.py;
+import comprobaciones.ComprobadorAmbito;
+import comprobaciones.ComprobadorTipos;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
+import simbolos.Simbolo;
+import simbolos.TablaSimbolos;
+import errores.ErrorG;
 
 //Codigo para el parser, variables, metodos
 parser code
 {:
-    
+    public TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
     
     private Symbol s;
     public void syntaxError(Symbol s){
@@ -36,7 +42,15 @@ parser code
 
 action code
 {:
-    
+    ComprobadorTipos comprobadorTipos = new ComprobadorTipos();
+    ComprobadorAmbito comprobadorAmbito = new ComprobadorAmbito();
+    ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    int ambitoFlag = 0;
+    int ambitoContador = 0;
+    int ambitoActual = 0;
+    String tipoV = "";
+    ArrayList<Integer> ambitos = new ArrayList<>();
+    TablaSimbolos tablaSimbolos = new TablaSimbolos();
 :}
 
 //Declaraciones 
@@ -55,7 +69,7 @@ terminal COMA, PARENTESIS_A, PARENTESIS_C;
 non terminal INICIO, declaracion_var, codigo, valor, funcion, codigo_def, tabs;
 non terminal ciclos, struct_for, datos_for, dato, mas_datos, struct_while;
 non terminal condicion, condiciones, pre, not, condicionales, struc_if, solicitud;
-non terminal mensajes, parametros, params, codigo_inicio, val, valor_tipo;
+non terminal mensajes, parametros, params, codigo_inicio, val, valor_tipo, comentarios;
 //non terminal ;
 
 //presedencia de menor a mayor
@@ -67,36 +81,37 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_PY codigo_inicio SEPARADOR_PROGRAMA;
+INICIO ::=   SEPARADOR_PY {:ambitoFlag=0;ambitoActual=ambitoFlag;:} codigo_inicio SEPARADOR_PROGRAMA {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:};
 
 declaracion_var ::= IDENTIFICADOR IGUAL valor_tipo SALTO;
 
 valor_tipo ::= valor
                 |solicitud;
 
-codigo_inicio ::= tabs codigo
+codigo_inicio ::= tabs:a {:ambitoContador = (int)a; System.out.println("Tabs: "+(int)a);:}codigo
                 |;
 
 codigo ::=   funcion codigo_inicio
             |declaracion_var codigo_inicio
             |ciclos codigo_inicio
             |condicionales codigo_inicio
+            |comentarios codigo_inicio
             |mensajes codigo_inicio
             |solicitud SALTO codigo_inicio
             |SALTO codigo_inicio;
 
-valor ::=    valor MAS valor
-            |valor COMA valor
-            |valor MENOS valor
-            |valor POR valor
-            |valor DIV valor
-            |valor DIV_ENTERO valor
-            |valor POT valor
-            |PARENTESIS_A valor PARENTESIS_C
-            |IDENTIFICADOR
-            |VALOR
-            |TEXTO
-            |NUMERO;
+valor ::=    valor:a MAS valor:b
+            |valor:a COMA valor:b
+            |valor:a MENOS valor:b
+            |valor:a POR valor:b
+            |valor:a DIV valor:b
+            |valor:a DIV_ENTERO valor:b
+            |valor:a POT valor:b    
+            |PARENTESIS_A valor:a PARENTESIS_C
+            |IDENTIFICADOR:a
+            |VALOR:a
+            |TEXTO:a
+            |NUMERO:a;
 
 funcion ::= DEF IDENTIFICADOR PARENTESIS_A parametros PARENTESIS_C DOS_PUNTOS SALTO;
 
@@ -108,8 +123,8 @@ params ::=   COMA IDENTIFICADOR
 
 codigo_def ::= declaracion_var;
 
-tabs ::= TAB tabs
-        |;
+tabs ::= TAB tabs:a {:RESULT = 1+(int) a;:}
+        |{:RESULT = 0;:};
 
 ciclos ::=   struct_for
             |struct_while;
@@ -161,4 +176,7 @@ solicitud ::=    INTINPUT PARENTESIS_A val PARENTESIS_C
 
 val ::= valor
         |;
+
+comentarios ::=  COMENTARIO_SIMPLE
+                |COMENTARIO_VARIOS;
 
