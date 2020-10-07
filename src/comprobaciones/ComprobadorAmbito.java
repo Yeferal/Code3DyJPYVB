@@ -7,6 +7,7 @@ import simbolos.Simbolo;
 public class ComprobadorAmbito {
     
     public ArrayList<Integer> ambitosCamino = new ArrayList<>();
+    int ambitoBandera=0, ambitoPivote=0;
     
     public void agregarAmbito(int ambitoNuevo){
         ambitosCamino.add(ambitoNuevo);
@@ -52,4 +53,46 @@ public class ComprobadorAmbito {
         }
         return true;
     }
+    
+    public void verificarAmbito(int ambitoFlag, int ambitoActual, int tabs){
+        //int contadorAmbito = ambitoFlag;
+        /*if(ambitosCamino.size()==tabs){
+            
+        }else if(ambitosCamino.size()<tabs){
+            int sumar = tabs-ambitosCamino.size();
+            sumarAmbito(sumar);
+        }else if(ambitosCamino.size()>tabs){
+            int restar = ambitosCamino.size()-tabs;
+            restarAmbito(restar);
+        }*/
+        sacarAmbito();
+        sumarAmbito(1);
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>AmbitoLista : "+ambitosCamino);
+        //return contadorAmbito;
+    }
+    
+    public void sumarAmbito(int sumar){
+        for (int i = 0; i < sumar; i++) {
+            ambitoBandera++;
+            agregarAmbito(ambitoBandera);  
+        }
+        ambitoPivote = getAmbitoActual();
+    }
+    
+    public void restarAmbito(int restar){
+        for (int i = 0; i < restar; i++) {
+            sacarAmbito();
+        }
+        ambitoPivote = getAmbitoActual();
+    }
+
+    public int getAmbitoBandera() {
+        return ambitoBandera;
+    }
+
+    public int getAmbitoPivote() {
+        return ambitoPivote;
+    }
+    
+    
 }

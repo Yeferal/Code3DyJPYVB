@@ -3,15 +3,14 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/comprobaciones/ComprobadorAmbito.java</file>
+            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/cpp/AnalizadorSintacticoCPP.java</file>
             <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/java/LexicoJAVA.jflex</file>
             <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/java/SintacticoJAVA.cup</file>
             <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/prueba2.mlg</file>
+            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/cpp/LexicoCPP.jflex</file>
             <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/simbolos/TablaSimbolos.java</file>
-            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/py/AnalizadorSintacticoPY.java</file>
             <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/main/Main.java</file>
-            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/py/LexicoPY.jflex</file>
-            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/py/SintacticoPY.cup</file>
+            <file>file:/E:/LENOVO-PC/Documents/NetBeansProjects/Compi%202/Code3DyJPYVB/src/analisis/cpp/SintacticoCPP.cup</file>
         </group>
     </open-files>
 </project-private>

@@ -1,0 +1,81 @@
+//codigo usuario
+package analisis.cpp.importaciones;
+import java_cup.runtime.Symbol;
+import java.util.ArrayList;
+
+//Codigo para el parser, variables, metodos
+parser code
+{:
+    
+    
+    private Symbol s;
+    public void syntaxError(Symbol s){
+        this.s = s;
+    }
+    public Symbol getS(Symbol s){
+        return this.s = s;
+    }
+
+    public void setAccion(String tipo,String mensaje,String accion){
+            System.out.println(tipo+"         "+mensaje);
+    }
+
+    public void syntax_error(Symbol s){
+            if(s!=null){
+                //ErrorG e = new ErrorG(s.right,s.left,(String) s.value,"Sintactico","Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                //listaErrores.add(e);
+                /*Error error = new Error((String) s.value,s.right, s.left, 2, "Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                erroresSintacticos.add(error);*/
+                setAccion("ERROR","Error Sintaxis token: Linea: " + ((int)s.right+1) + ",   Columna: " + ((int)s.left+1) + ",  Simbolo: " + s.value, "");
+            }
+    }
+
+:}
+
+//Coidgo para las acciones gramaticales
+
+action code
+{:
+    
+:}
+
+//Declaraciones 
+terminal VB, JV, PY, COMILLAS, PUNTO, IDENTIFICADOR, NUMERO, DECIMAL, ASTERISCO;
+
+//terminal ;
+
+
+
+// declaracion no terminales
+non terminal INICIO, codigos, importacion_vb, importacion_jv, importacion_py, er;
+
+//non terminal ;
+
+//presedencia de menor a mayor
+
+
+
+start with INICIO;
+
+//Reglas Semanticas
+
+INICIO ::=   COMILLAS codigos COMILLAS
+            |error:e {:parser.syntax_error((Symbol)e); :} er;
+
+er ::= ;
+
+codigos ::=  VB importacion_vb
+            |JV importacion_jv
+            |PY importacion_py;
+
+importacion_vb ::=   PUNTO IDENTIFICADOR importacion_vb
+                    |PUNTO ASTERISCO
+                    |;
+
+importacion_jv ::=  PUNTO IDENTIFICADOR importacion_jv
+                    |PUNTO ASTERISCO
+                    |;
+
+importacion_py ::=  PUNTO IDENTIFICADOR importacion_py
+                    |PUNTO ASTERISCO
+                    |;

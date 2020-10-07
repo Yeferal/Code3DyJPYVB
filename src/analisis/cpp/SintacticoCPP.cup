@@ -1,12 +1,18 @@
 //codigo usuario
 package analisis.cpp;
+import comprobaciones.ComprobadorAmbito;
+import comprobaciones.ComprobadorTipos;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
+import simbolos.Simbolo;
+import simbolos.TablaSimbolos;
+import errores.ErrorG;
 
 //Codigo para el parser, variables, metodos
 parser code
 {:
-    
+    public TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
     
     private Symbol s;
     public void syntaxError(Symbol s){
@@ -36,7 +42,14 @@ parser code
 
 action code
 {:
-    
+    ComprobadorTipos comprobadorTipos = new ComprobadorTipos();
+    ComprobadorAmbito comprobadorAmbito = new ComprobadorAmbito();
+    ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    int ambitoFlag = 0;
+    int ambitoActual = 0;
+    String tipoV = "";
+    ArrayList<Integer> ambitos = new ArrayList<>();
+    TablaSimbolos tablaSimbolos = new TablaSimbolos();
 :}
 
 //Declaraciones 
@@ -47,9 +60,10 @@ terminal INT, FLOAT, CHAR, COMENTARIO_SIMPLE, COMENTARIO_VARIOS, PRINTF;
 //terminal CLASS, INT, FLOAT, CHAR, COMENTARIO_SIMPLE, COMENTARIO_VARIOS, PRINTF;
 //terminal INTINPUT, FLOATINPUT, CHARINPUT, FOR, WHILE, DO, IF, ELSE, SWITCH, CASE;
 terminal FOR, WHILE, DO, IF, ELSE, SWITCH, CASE;
-terminal BREAK, DEFAULT, VOID, RETURN, IDENTIFICADOR, NUMERO, DECIMAL, VALOR, TEXTO;
+terminal BREAK, DEFAULT, MAIN_VOID, RETURN, IDENTIFICADOR, NUMERO, DECIMAL, VALOR, TEXTO;
 terminal IGUAL, DOS_PUNTOS, CORCHETE_A, CORCHETE_C, LLAVES_A, LLAVES_C, PUNTO_COMA;
-terminal COMA, PARENTESIS_A, PARENTESIS_C, PUNTO;
+terminal COMA, PARENTESIS_A, PARENTESIS_C, PUNTO, VB, PY, JV_ALL, JV_ONE;
+terminal VB_ONE, PY_ONE, VB_ALL, PY_ALL, MAIN_INT;
 //terminal ;
 
 
@@ -67,6 +81,9 @@ non terminal struc_scanf, parametros_llamada, val_llamada, var_senten, struc_pri
 //non terminal ;
 
 //presedencia de menor a mayor
+precedence left NOT;
+precedence left OR;
+precedence left AND;
 precedence left MODULO;
 precedence left MAS, MENOS;
 precedence left POR, DIV;
@@ -76,14 +93,19 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=  SEPARADOR_PROGRAMA includs_code codigo;
+INICIO ::=  SEPARADOR_PROGRAMA {:ambitoFlag=0;ambitoActual=ambitoFlag;:} includs_code codigo struc_function {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:};
 
 
 includs_code ::= includs includs_code
                 |;
+/*
+codigo_inicial ::=   struc_vars codigo
+                    |struc_function codigo
+                    |mensaje codigo
+                    |comentarios codigo
+                    |;*/
 
 codigo ::=   struc_vars codigo
-            |struc_function codigo
             |mensaje codigo
             |comentarios codigo
             |;
@@ -115,7 +137,12 @@ comentarios ::=  COMENTARIO_SIMPLE
 
 
 includs ::=  INCLUDE MENOR_QUE IDENTIFICADOR identificador_include MAYOR_QUE 
-            |INCLUDE TEXTO;
+            |INCLUDE PY_ALL
+            |INCLUDE PY_ONE
+            |INCLUDE VB_ALL
+            |INCLUDE VB_ONE
+            |INCLUDE JV_ALL
+            |INCLUDE JV_ONE;
 
 identificador_include ::= PUNTO IDENTIFICADOR parentesis 
                         |PUNTO IDENTIFICADOR identificador_include
@@ -123,28 +150,67 @@ identificador_include ::= PUNTO IDENTIFICADOR parentesis
 
 parentesis ::= PARENTESIS_A PARENTESIS_C;
 
-struc_vars ::=   INT struc_asig_vars_n PUNTO_COMA
-                |FLOAT struc_asig_vars_n PUNTO_COMA
-                |CHAR struc_asig_vars_c PUNTO_COMA
+struc_vars ::=   INT {:tipoV="Integer";:} struc_asig_vars_n PUNTO_COMA
+                |FLOAT {:tipoV="Float";:} struc_asig_vars_n PUNTO_COMA
+                |CHAR {:tipoV="Char";:} struc_asig_vars_c PUNTO_COMA
                 |CONSTANTE struc_constante
-                |IDENTIFICADOR IGUAL var_senten PUNTO_COMA
+                |IDENTIFICADOR:a IGUAL var_senten:b PUNTO_COMA  {:
+                            if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                                Simbolo s = tablaSimbolos.getSimbolo();
+                                System.out.println("Valor-=======================================-=---------------"+b);
+                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
+                                    tablaSimbolos.setSimbolo(b);
+                                }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+                                
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
+                        :}
                 |IDENTIFICADOR struc_dim_arreglo IGUAL var_senten PUNTO_COMA;
 
-var_senten ::=  valor
+var_senten ::=  valor:a {:RESULT = a;:}
                |IDENTIFICADOR struc_llamada;
 
-struc_constante ::=  INT struc_asig_vars_n PUNTO_COMA
-                    |FLOAT struc_asig_vars_n PUNTO_COMA
-                    |CHAR struc_asig_vars_c PUNTO_COMA;
+struc_constante ::=  INT {:tipoV="CONST_INT";:} struc_asig_vars_n PUNTO_COMA
+                    |FLOAT {:tipoV="CONST_FLOAT";:} struc_asig_vars_n PUNTO_COMA
+                    |CHAR {:tipoV="CONST_CHAR";:} struc_asig_vars_c PUNTO_COMA;
 
 struc_dim_arreglo ::= CORCHETE_A valor CORCHETE_C struc_dim_arreglo
                     |CORCHETE_A valor CORCHETE_C;
 
-struc_asig_vars_n ::=    IDENTIFICADOR IGUAL valor_n COMA struc_asig_vars_n
-                        |IDENTIFICADOR COMA struc_asig_vars_n
-                        |IDENTIFICADOR IGUAL valor_n
+struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null;
+                            if(a!=null){
+                                tipo = tipoV;
+                            }
+                            if(tipo!=null){
+                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
+                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                    tablaSimbolos.agregarSimbolo(s);
+                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            }
+                        :} COMA struc_asig_vars_n
+                        |IDENTIFICADOR:b {:
+                            Simbolo s = new Simbolo((String)b,tipoV,ambitoActual,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                        :} COMA struc_asig_vars_n
+                        |IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null;
+                            if(a!=null){
+                                tipo = tipoV;
+                            }
+                            if(tipo!=null){
+                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
+                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                    tablaSimbolos.agregarSimbolo(s);
+                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            }
+                        :}
                         |IDENTIFICADOR struc_arreglo
-                        |IDENTIFICADOR;
+                        |IDENTIFICADOR:b {:
+                            Simbolo s = new Simbolo((String)b,tipoV,ambitoActual,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                        :};
 
 struc_asig_vars_c ::=    IDENTIFICADOR IGUAL valor_c COMA struc_asig_vars_c
                         |IDENTIFICADOR COMA struc_asig_vars_c
@@ -158,39 +224,187 @@ struc_ciclos ::= struct_for
                 |struct_do_while
                 |struct_while;
 
-struct_for ::= FOR PARENTESIS_A struc_indices PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C;
+struct_for ::= FOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_indices PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
-struc_indices ::= IDENTIFICADOR IGUAL valor_n PUNTO_COMA IDENTIFICADOR valor_comprobacion PUNTO_COMA IDENTIFICADOR struc_a;
+struc_indices ::=    IDENTIFICADOR:a IGUAL valor_n:b PUNTO_COMA {:
+                            if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                                Simbolo s = tablaSimbolos.getSimbolo();
+                                System.out.println("Valor-=======================================-=---------------"+b);
+                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
+                                    tablaSimbolos.setSimbolo(b);
+                                }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+                                
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
+                        :} IDENTIFICADOR valor_comprobacion PUNTO_COMA IDENTIFICADOR struc_a
+                    |INT IDENTIFICADOR:b IGUAL valor_n:a PUNTO_COMA {: String tipo = null;
+                            if(a!=null){
+                                tipo = "Integer";
+                            }
+                            if(tipo!=null){
+                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
+                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                    tablaSimbolos.agregarSimbolo(s);
+                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            }
+                        :} IDENTIFICADOR valor_comprobacion PUNTO_COMA IDENTIFICADOR struc_a;
 
-valor_c ::=  valor_c MAS valor_c
-            |valor_c MENOS valor_c
-            |valor_c POR valor_c
-            |valor_c DIV valor_c
-            |valor_c MODULO valor_c
-            |PARENTESIS_A valor_c PARENTESIS_C
-            |IDENTIFICADOR
-            |VALOR
-            |NUMERO
-            |DECIMAL;
+valor_c ::=  valor_c:a MAS valor_c:b 
+            |valor_c:a MENOS valor_c:b 
+            |valor_c:a POR valor_c:b 
+            |valor_c:a DIV valor_c:b 
+            |valor_c:a MODULO valor_c:b 
+            |PARENTESIS_A valor_c:a PARENTESIS_C
+            |IDENTIFICADOR:a
+            |VALOR:a {:RESULT = (Integer)a;:}
+            |NUMERO:a {:RESULT = (Integer)a;:}
+            |DECIMAL:a ;
 
-valor_n ::=  valor_n MAS valor_n
-            |valor_n MENOS valor_n
-            |valor_n POR valor_n
-            |valor_n DIV valor_n
-            |valor_n MODULO valor_n
-            |PARENTESIS_A valor_n PARENTESIS_C
-            |IDENTIFICADOR
-            |NUMERO
-            |DECIMAL;
+valor_n ::=  valor_n:a MAS:c valor_n:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a+(int)b); RESULT = resultado;
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)+(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor_n:a MENOS:c valor_n:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a-(int)b); RESULT = resultado;
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)-(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor_n:a POR:c valor_n:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)*(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{int resultado = (int) ((int)a*(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor_n:a DIV:c valor_n:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)/(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a/(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor_n:a MODULO:c valor_n:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)%(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a%(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |PARENTESIS_A valor_n:a PARENTESIS_C {:RESULT = a;:}
+            |IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                                RESULT = tablaSimbolos.getSimboloValor();
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :}
+            |NUMERO:a {:RESULT = (Integer)a;:}
+            |DECIMAL:a {:RESULT = (float)a;:} ;
 
-valor_int ::=    valor_int MAS valor_int
-                |valor_int MENOS valor_int
-                |valor_int POR valor_int
-                |valor_int DIV valor_int
-                |valor_int MODULO valor_int
-                |PARENTESIS_A valor_int PARENTESIS_C
-                |IDENTIFICADOR
-                |NUMERO;
+valor_int ::=    valor_int:a MAS:c valor_int:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a+(int)b); RESULT = resultado;
+                                }else{int resultado = (int) ((float)comprobadorTipos.convertirFlotante(a)+(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |valor_int:a MENOS:c valor_int:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a-(int)b); RESULT = resultado;
+                                }else{int resultado = (int) ((float)comprobadorTipos.convertirFlotante(a)-(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |valor_int:a POR:c valor_int:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    int resultado = (int) ((float)comprobadorTipos.convertirFlotante(a)*(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{int resultado = (int) ((int)a*(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |valor_int:a DIV:c valor_int:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    int resultado = (int) ((float)comprobadorTipos.convertirFlotante(a)/(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a/(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |valor_int:a MODULO:c valor_int:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    int resultado = (int) ((float)comprobadorTipos.convertirFlotante(a)%(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a%(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |PARENTESIS_A valor_int:a PARENTESIS_C {:RESULT = a;:}
+                |IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                                RESULT = tablaSimbolos.getSimboloValor();
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :}
+                |NUMERO:a {:RESULT = (Integer)a;:};
 
 valor_comprobacion ::=   MENOR_QUE valor_n
                         |MAYOR_QUE valor_n
@@ -199,63 +413,128 @@ valor_comprobacion ::=   MENOR_QUE valor_n
                         |IGUAL_IGUAL valor_n
                         |DIFERENTE valor_n;
 
-valor ::=    valor MAS valor
-            |valor MENOS valor
-            |valor POR valor
-            |valor DIV valor
-            |valor MODULO valor
-            |PARENTESIS_A valor PARENTESIS_C
-            |IDENTIFICADOR
-            |IDENTIFICADOR CORCHETE_A valor CORCHETE_C
-            |VALOR
-            |NUMERO
-            |DECIMAL;
+valor ::=   valor:a MAS:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a+(int)b); RESULT = resultado;
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)+(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a MENOS:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a-(int)b); RESULT = resultado;
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)-(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a POR:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)*(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{int resultado = (int) ((int)a*(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a DIV:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)/(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a/(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :} 
+            |valor:a MODULO:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)%(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a%(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :} 
+            |PARENTESIS_A valor:a PARENTESIS_C {:RESULT = a;:}
+            |IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                                RESULT = tablaSimbolos.getSimboloValor();
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :}
+            |IDENTIFICADOR:a CORCHETE_A valor:b CORCHETE_C
+            |VALOR:a {:RESULT = (char)a;:}
+            |NUMERO:a {:RESULT = (Integer)a;:}
+            |DECIMAL:a {:RESULT = (float)a;:};
 
 struc_a ::=  IGUAL valor_n 
             |MAS_MAS 
             |MENOS_MENOS; 
 
 
-struct_while ::= WHILE PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C ;
+struct_while ::= WHILE PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
-struct_do_while ::= DO LLAVES_A codigo_funcion LLAVES_C WHILE PARENTESIS_A struc_condicional PARENTESIS_C PUNTO_COMA;
+struct_do_while ::= DO LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion LLAVES_C WHILE PARENTESIS_A struc_condicional PARENTESIS_C PUNTO_COMA {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
 valor_condicional ::=    valor MENOR_QUE valor
                         |valor MAYOR_QUE valor
                         |valor MENOR_IGUAL valor
                         |valor MAYOR_IGUAL valor
                         |valor IGUAL_IGUAL valor
-                        |valor DIFERENTE valor
-                        |PARENTESIS_A valor_condicional PARENTESIS_C;
+                        |valor DIFERENTE valor;
 
 
-struc_condicional ::= struc_logico_not  valor_condicional struc_logico;
+struc_condicional ::= struc_logico;
 
-struc_logico ::= AND struc_logico_not  valor_condicional struc_logico
-                |OR struc_logico_not  valor_condicional struc_logico
-                | ;
+struc_logico ::= struc_logico AND struc_logico
+                |struc_logico OR struc_logico
+                |PARENTESIS_A struc_logico PARENTESIS_C
+                |NOT PARENTESIS_A struc_logico PARENTESIS_C
+                |valor_condicional;
 
 struc_logico_not ::= NOT
                     |;
 
-struc_if ::= IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C struc_else;
+struc_if ::= IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} struc_else;
 
-struc_else ::=   ELSE IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C struc_else
-                |ELSE LLAVES_A codigo_funcion LLAVES_C
+struc_else ::=   ELSE IF PARENTESIS_A struc_condicional PARENTESIS_C LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} struc_else
+                |ELSE LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();:}
                 | ;
 
 struc_switch ::= SWITCH PARENTESIS_A IDENTIFICADOR PARENTESIS_C LLAVES_A struc_case LLAVES_C;
 
-struc_case ::=   CASE valor_case DOS_PUNTOS codigo_funcion BREAK PUNTO_COMA struc_case
-                |CASE valor_case DOS_PUNTOS codigo_funcion BREAK PUNTO_COMA
-                |DEFAULT DOS_PUNTOS codigo_funcion;
+struc_case ::=   CASE valor_case DOS_PUNTOS {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion BREAK PUNTO_COMA {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} struc_case
+                |DEFAULT DOS_PUNTOS {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} codigo_funcion  {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
+                |;
 
 valor_case ::=   VALOR
                 |NUMERO
                 |DECIMAL;
 
-struc_function ::=  VOID IDENTIFICADOR PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C
-                   |vars PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion RETURN valor PUNTO_COMA LLAVES_C ;
+struc_function ::=  MAIN_VOID {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
+                   |MAIN_INT {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion RETURN valor PUNTO_COMA LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} ;
 
 struc_params ::= struc_vars_params params
                 |;
@@ -263,9 +542,24 @@ struc_params ::= struc_vars_params params
 params ::=   COMA struc_vars_params params
             |;
 
-struc_vars_params ::=    INT IDENTIFICADOR
-                        |FLOAT IDENTIFICADOR
-                        |CHAR IDENTIFICADOR;
+struc_vars_params ::=    INT IDENTIFICADOR:b {:
+                            Simbolo s = new Simbolo((String)b,"Integer",ambitoActual,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                        :}
+                        |FLOAT IDENTIFICADOR:b {:
+                            Simbolo s = new Simbolo((String)b,"Float",ambitoActual,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                        :}
+                        |CHAR IDENTIFICADOR:b {:
+                            Simbolo s = new Simbolo((String)b,"Char",ambitoActual,null);
+                            if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                tablaSimbolos.agregarSimbolo(s);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                        :};
 
 vars ::=     INT
             |FLOAT
@@ -273,17 +567,17 @@ vars ::=     INT
 
 mensaje ::= PRINTF valor_m struc_printf PARENTESIS_C PUNTO_COMA;
 
-valor_m ::=  valor_m MAS valor_m
-            |valor_m MENOS valor_m
-            |valor_m POR valor_m
-            |valor_m DIV valor_m
-            |PARENTESIS_A valor_m PARENTESIS_C
-            |IDENTIFICADOR CORCHETE_A valor_m CORCHETE_C
-            |IDENTIFICADOR
-            |TEXTO
-            |VALOR
-            |NUMERO
-            |DECIMAL;
+valor_m ::=  valor_m:a MAS valor_m:b 
+            |valor_m:a MENOS valor_m:b 
+            |valor_m:a POR valor_m:b 
+            |valor_m:a DIV valor_m:b 
+            |PARENTESIS_A valor_m:a PARENTESIS_C
+            |IDENTIFICADOR:a CORCHETE_A valor_m:b  CORCHETE_C
+            |IDENTIFICADOR:a
+            |TEXTO:a
+            |VALOR:a
+            |NUMERO:a
+            |DECIMAL:a;
 
 struc_printf ::= COMA ANDPERSAND IDENTIFICADOR struc_printf
                 |COMA IDENTIFICADOR struc_printf

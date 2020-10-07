@@ -159,7 +159,8 @@ public class algo{
 %%PY
 
 def edadmeses(edad, meses):
-    edad = intinput("Ingrese su edad:")
+    edad = 5
+    intinput("Ingrese su edad:")
     meses = edad * 12
     print("meses = ",meses)
     #intinput("")
@@ -173,8 +174,9 @@ def edadmeses(edad, meses):
             h = 1
             while h<10:
                 h= h+3
+                return 10
     hola = 2
-
+    return 10
 
 def saludo():
     edad = intinput("Ingrese su edad:")
@@ -189,7 +191,10 @@ def saludo():
 #include <stdio.h>
 #include <stdlib.h>
 #include "VB.h()"
-#include "PY"
+#include "VB"
+#include "PY.HOLA()"
+#include "JAVA.*"
+#include "JAVA.hola"
 
 // Constantes
 const int constante1 = 10;
@@ -197,43 +202,43 @@ const int constante1 = 10;
 // Variables globales
 int Arreglo1[1][4];
 
-void main()
+int main()
 {
-  int base, exp, i, resultado;
-  
-  clrscr();
-  
-  printf("Bienvenido");
+    int base, exp, i, resultado;
 
-  VB.Saludo();
+    clrscr();
 
-  printf("Ingrese el primer valor entero");
-  scanf("%d",&base);
-  printf("Ingrese el segudo valor entero");
-  scanf("%d",&exp);
+    printf("Bienvenido");
 
-  // Factorial
-  resultado = VB.Factorial(i);
- 
-  printf("El factorial de %d es %d",&a,&resultado);
-    
-  printf("Conversion de años a meses");
+    VB.Saludo();
 
-  PY.edadmeses();
+    printf("Ingrese el primer valor entero");
+    scanf("%d",&base);
+    printf("Ingrese el segudo valor entero");
+    scanf("%d",&exp);
 
-  // Arreglo
-  Arreglo1[1][1] = 0;
-  
-  // inicio for
-  for(i = 0; i <= exp; i = i + 1)
-  {
-	resultado = resultado * base;
+    // Factorial
+    resultado = VB.Factorial(i);
 
-  } // fin for
-  
-  printf("%d ",base);
-  printf("^ %d",exp);
-  printf(" = %d",resultado);
+    printf("El factorial de %d es %d",&a,&resultado);
 
-  getch();
+    printf("Conversion de años a meses");
+
+    PY.edadmeses();
+
+    // Arreglo
+    Arreglo1[1][1] = 0;
+
+    // inicio for
+    for(i = 0; i <= exp; i = i + 1)
+    {
+      resultado = resultado * base;
+    } // fin for
+
+    printf("%d ",base);
+    printf("^ %d",exp);
+    printf(" = %d",resultado);
+
+    getch();
+    return 0;
 }

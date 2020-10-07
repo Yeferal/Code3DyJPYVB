@@ -3,6 +3,8 @@ package main;
 
 import analisis.cpp.AnalizadorLexicoCPP;
 import analisis.cpp.AnalizadorSintacticoCPP;
+import analisis.cpp.importaciones.AnalizadorLexicoIm;
+import analisis.cpp.importaciones.AnalizadorSintacticoIm;
 import analisis.java.AnalizadorLexicoJAVA;
 import analisis.java.AnalizadorSintacticoJAVA;
 import analisis.py.AnalizadorLexicoPY;
@@ -10,6 +12,7 @@ import analisis.py.AnalizadorSintacticoPY;
 import analisis.vb.AnalizadorLexicoVB;
 import analisis.vb.AnalizadorSintacticoVB;
 import archivos.Archivo;
+import comprobaciones.ComprobadorAmbito;
 import comprobaciones.ComprobadorTipos;
 import java.io.StringReader;
 import java.util.logging.Level;
@@ -45,11 +48,17 @@ public class Main {
         
         AnalizadorLexicoCPP analizadorLexicoCPP = new AnalizadorLexicoCPP(new StringReader(texto));
         AnalizadorSintacticoCPP analizadorSintacticoCPP = new AnalizadorSintacticoCPP(analizadorLexicoCPP);
+        
+        AnalizadorLexicoIm analizadorLexicoIm = new AnalizadorLexicoIm(new StringReader("\"JAVA.*\""));
+        AnalizadorSintacticoIm analizadorSintacticoIm = new AnalizadorSintacticoIm(analizadorLexicoIm);
         try {
-            //analizadorSintacticoVB.parse();
-            //analizadorSintacticoJAVA.parse();
+            analizadorSintacticoVB.parse();
+            analizadorSintacticoJAVA.parse();
             analizadorSintacticoPY.parse();
-            //analizadorSintacticoCPP.parse();
+            analizadorSintacticoCPP.parse();
+            
+            //analizadorSintacticoIm.parse();
+            
             System.out.println("\n==>TERMINO<==\n\n");
             System.out.println("Tabla Simbolos VB");
             analizadorSintacticoVB.tablaSimbolos.pintar();
@@ -57,6 +66,8 @@ public class Main {
             analizadorSintacticoJAVA.tablaSimbolos.pintar();
             System.out.println("\nTabla Simbolos PY");
             analizadorSintacticoPY.tablaSimbolos.pintar();
+            System.out.println("\nTabla Simbolos CPP");
+            analizadorSintacticoCPP.tablaSimbolos.pintar();
         } catch (Exception ex) {
             //ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -74,8 +85,13 @@ public class Main {
         for (int i = 0; i < analizadorSintacticoPY.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoPY.erroresSemanticos.get(i).toString());
         }
+        System.out.println("\nErrores PROGRAMA PRINCIPAL");
+        for (int i = 0; i < analizadorSintacticoCPP.erroresSemanticos.size(); i++) {
+            System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());
+        }
         System.out.println("");
         ComprobadorTipos c = new ComprobadorTipos();
+        ComprobadorAmbito ca = new ComprobadorAmbito();
         //c.isNumero("55.00");
         //c.isFloat("555");
         //c.isFloat("5.3");
@@ -89,14 +105,18 @@ public class Main {
         //float g = (float) o1;
         //System.out.println("Hola2: "+g+"\n");
         int t = (int) 2.5;
-        c.tiparObjeto((float)5/2);
+        //c.tiparObjeto((float)5/2);
+        int ambitoFlag = 2;
+        //ca.verificarAmbito(ambitoFlag, 10, 2);
+        
+        System.out.println("Ambito Nuevo: "+ambitoFlag);
         //float dx = (float) c.sumar((float)2.2,3);
         //double xd = (float) dx;
         //System.out.println("Hola: "+c.dividir(5,2));
         //System.out.println("NUMERO: "+c.getTipoSimbolo(o));
         
         if (!(5<4)) {
-            System.out.println("BIENNNN");
+            System.out.println("\nhLLLL: "+((float)5/(float)2)+", MODULO: "+((float)2.5%(float)2));
         }
         
     }

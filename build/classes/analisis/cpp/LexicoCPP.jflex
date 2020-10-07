@@ -39,13 +39,19 @@ Espacio         = [ \b\n\r]+
 
 
 <YYINITIAL> {
-    ("%%VB" ({LqSea}|.|\n)*)("%%JAVA" ({LqSea}|.|\n)*)("%%PY" ({LqSea}|.|\n)*) ("%%PROGRAMA")            {System.out.println(yytext()); return new Symbol(SimbolosCPP.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
+    ("%%VB" ({LqSea}|.|\n)*)("%%JAVA" ({LqSea}|.|\n)*)("%%PY" ({LqSea}|.|\n)*) ("%%PROGRAMA")            {System.out.println("%%PROGRAMA"); return new Symbol(SimbolosCPP.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
     
-    "VB"                                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.VB , yycolumn, yyline, yytext());}
-    "VB"                                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.VB , yycolumn, yyline, yytext());}
-    "VB"                                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.VB , yycolumn, yyline, yytext());}
+    "\"VB\""                                                                    {System.out.println("Todas fVB: "+yytext()); return new Symbol(SimbolosCPP.VB_ALL , yycolumn, yyline, yytext());}
+    ("\"VB." ({Letra})("_"| {Letra}| {Numero})* "()\"")                         {System.out.println("Una FuncionVB: "+yytext()); return new Symbol(SimbolosCPP.VB_ONE , yycolumn, yyline, yytext());}
+    "\"PY\""                                                                    {System.out.println("Todas fPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ALL , yycolumn, yyline, yytext());}
+    ("\"PY." ({Letra})("_"| {Letra}| {Numero})* "()\"")                          {System.out.println("Una FuncionPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ONE , yycolumn, yyline, yytext());}
+    "\"JAVA.*\""                                                                {System.out.println("Todas las clases: "+yytext()); return new Symbol(SimbolosCPP.JV_ALL , yycolumn, yyline, yytext());}
+    ("\"JAVA." ({Letra})("_"| {Letra}| {Numero})*"\"")                          {System.out.println("Una clase: "+yytext()); return new Symbol(SimbolosCPP.JV_ONE , yycolumn, yyline, yytext());}
 
     //Reservadas
+    //"main"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.VOID , yycolumn, yyline, yytext());}
+    ("void main")                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.MAIN_VOID , yycolumn, yyline, yytext());}
+    ("int main")                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.MAIN_INT , yycolumn, yyline, yytext());}
     "#include"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.INCLUDE , yycolumn, yyline, yytext());}
     "const"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.CONSTANTE , yycolumn, yyline, yytext());}
     "scanf("                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.SCANF, yycolumn, yyline, yytext());}
@@ -112,15 +118,15 @@ Espacio         = [ \b\n\r]+
     
     //Funciones
     //"Class"                                   {System.out.println(yytext()); return new Symbol(SimbolosCPP.CLASS , yycolumn, yyline, yytext());}
-    "void"                                  {System.out.println(yytext()); return new Symbol(SimbolosCPP.VOID, yycolumn, yyline, yytext());}
+    //"void"                                  {System.out.println(yytext()); return new Symbol(SimbolosCPP.VOID, yycolumn, yyline, yytext());}
     "return"                                    {System.out.println(yytext()); return new Symbol(SimbolosCPP.RETURN , yycolumn, yyline, yytext());}
     
     //Declaracion de variables
     //"Public"                                    {System.out.println(yytext()); return new Symbol(SimbolosCPP.PUBLIC , yycolumn, yyline, yytext());}
     ({Letra})("_"| {Letra}| {Numero})*          {System.out.println("id: "+yytext()); return new Symbol(SimbolosCPP.IDENTIFICADOR , yycolumn, yyline, yytext());}
     
-    (("-")?{Numero}"."{Numero})                       {System.out.println("DECIMAL: "+yytext()); return new Symbol(SimbolosCPP.DECIMAL , yycolumn, yyline, yytext());}
-    (("-")?{Numero})                                  {System.out.println("NUMERO: "+yytext()); return new Symbol(SimbolosCPP.NUMERO , yycolumn, yyline, yytext());}
+    ({Numero}"."{Numero})                       {System.out.println("DECIMAL: "+yytext()); return new Symbol(SimbolosCPP.DECIMAL , yycolumn, yyline, new Float(yytext()));}
+    ({Numero})                                  {System.out.println("NUMERO: "+yytext()); return new Symbol(SimbolosCPP.NUMERO , yycolumn, yyline,new Integer(yytext()));}
     ("'"({LqSea}|.)*"'")                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.VALOR , yycolumn, yyline, yytext());}
     ("\""({LqSea}|.)*"\"")                      {System.out.println(yytext()); return new Symbol(SimbolosCPP.TEXTO , yycolumn, yyline, yytext());}
     
@@ -145,8 +151,8 @@ Espacio         = [ \b\n\r]+
     "."                                         {System.out.println("punto"); return new Symbol(SimbolosCPP.PUNTO , yycolumn, yyline, yytext());}
     //".."                                        {System.out.println("PUNTO_PUNTO"); return new Symbol(SimbolosCPP.PUNTO_PUNTO , yycolumn, yyline, yytext());}
 
-    .                               {System.out.println("error Lexico: "+"Columna: "+yycolumn+1+" linea: "+ yyline+1 + "Token: "+yytext());
-                                    /*ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
+    .                               {System.out.println("error Lexico: "+"Columna: "+(yycolumn+1)+" linea: "+ (yyline+1) + ", Token: "+yytext());
+                                    /*ErrorG e = new ErrorG((yyline+1), (yycolumn+1),yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + ((int)yyline+1) + " ,    Columna: " + ((int)yycolumn+1));
                                     listaErrores.add(e);*/
                                     }
     

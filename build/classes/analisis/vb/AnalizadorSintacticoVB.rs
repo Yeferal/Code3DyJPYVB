@@ -1,0 +1,2 @@
+analisis.vb.AnalizadorSintacticoVB
+analisis.vb.CUP$AnalizadorSintacticoVB$actions

@@ -51,6 +51,11 @@ action code
     String tipoV = "";
     ArrayList<Integer> ambitos = new ArrayList<>();
     TablaSimbolos tablaSimbolos = new TablaSimbolos();
+
+    public void actualizarAmbitos(){
+        ambitoFlag = comprobadorAmbito.getAmbitoBandera();
+        ambitoActual = comprobadorAmbito.getAmbitoPivote();
+    }
 :}
 
 //Declaraciones 
@@ -67,7 +72,7 @@ terminal COMA, PARENTESIS_A, PARENTESIS_C;
 
 // declaracion no terminales
 non terminal INICIO, declaracion_var, codigo, valor, funcion, codigo_def, tabs;
-non terminal ciclos, struct_for, datos_for, dato, mas_datos, struct_while;
+non terminal ciclos, struct_for, datos_for, dato, mas_datos, struct_while, retunr_v;
 non terminal condicion, condiciones, pre, not, condicionales, struc_if, solicitud;
 non terminal mensajes, parametros, params, codigo_inicio, val, valor_tipo, comentarios;
 //non terminal ;
@@ -81,14 +86,53 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_PY {:ambitoFlag=0;ambitoActual=ambitoFlag;:} codigo_inicio SEPARADOR_PROGRAMA {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:};
+INICIO ::=   SEPARADOR_PY {:actualizarAmbitos();:} codigo_inicio SEPARADOR_PROGRAMA {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:};
 
-declaracion_var ::= IDENTIFICADOR IGUAL valor_tipo SALTO;
+declaracion_var ::= IDENTIFICADOR:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }/*else{
+                        comprobadorAmbito.verificarAmbito(ambitoFlag,ambitoActual,ambitoContador);actualizarAmbitos();
+                    }*/
+                :} IGUAL valor_tipo:b SALTO {:
+                    if(b!=null){
+                        if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                            
+                            switch(comprobadorTipos.getValorTipo(b)){
+                                case 1:
+                                    tablaSimbolos.setSimboloPY(b,"Integer");
+                                    break;
+                                case 2:
+                                    tablaSimbolos.setSimboloPY(b,"Float");
+                                    break;
+                                case 3:
+                                    tablaSimbolos.setSimboloPY(b,"Char");
+                                    break;
+                            }
+                        }else{
+                            switch(comprobadorTipos.getValorTipo(b)){
+                                case 1:
+                                    Simbolo s = new Simbolo((String)a,"Integer",ambitoActual,b);
+                                    tablaSimbolos.agregarSimbolo(s);
+                                    break;
+                                case 2:
+                                    Simbolo s1 = new Simbolo((String)a,"Float",ambitoActual,b);
+                                    tablaSimbolos.agregarSimbolo(s1);
+                                    break;
+                                case 3:
+                                    Simbolo s2 = new Simbolo((String)a,"Char",ambitoActual,b);
+                                    tablaSimbolos.agregarSimbolo(s2);
+                                    break;
+                            }
+                            
+                        }
+                    }
+                :};
 
-valor_tipo ::= valor
-                |solicitud;
+valor_tipo ::= valor:a {:RESULT = a;:}
+                |solicitud:a {:RESULT = a;:};
 
-codigo_inicio ::= tabs:a {:ambitoContador = (int)a; System.out.println("Tabs: "+(int)a);:}codigo
+codigo_inicio ::= tabs:a {:ambitoContador = (int)a; System.out.println("Tabs: "+(int)a);:} codigo
                 |;
 
 codigo ::=   funcion codigo_inicio
@@ -97,28 +141,146 @@ codigo ::=   funcion codigo_inicio
             |condicionales codigo_inicio
             |comentarios codigo_inicio
             |mensajes codigo_inicio
+            |retunr_v codigo_inicio
             |solicitud SALTO codigo_inicio
             |SALTO codigo_inicio;
 
-valor ::=    valor:a MAS valor:b
-            |valor:a COMA valor:b
-            |valor:a MENOS valor:b
-            |valor:a POR valor:b
-            |valor:a DIV valor:b
-            |valor:a DIV_ENTERO valor:b
-            |valor:a POT valor:b    
-            |PARENTESIS_A valor:a PARENTESIS_C
-            |IDENTIFICADOR:a
-            |VALOR:a
-            |TEXTO:a
-            |NUMERO:a;
+retunr_v ::= RETURN valor SALTO;
 
-funcion ::= DEF IDENTIFICADOR PARENTESIS_A parametros PARENTESIS_C DOS_PUNTOS SALTO;
+valor ::=    valor:a MAS valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a+(int)b); RESULT = resultado;
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)+(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                String texto = a +""+ b; RESULT = texto;
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a COMA valor:b {:
+                        if(a!=null && b!=null){
+                            String texto = a +""+b; RESULT = texto;
+                        }else{RESULT = null;}
+                :}
+            |valor:a MENOS:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
+                                    int resultado = (int) ((int)a-(int)b); RESULT = resultado;
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)-(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a POR:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)*(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{int resultado = (int) ((int)a*(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a DIV:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)/(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a/(int)b); RESULT = resultado;}
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a DIV_ENTERO:c valor:b {:
+                        if(a!=null && b!=null){
+                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
+                                int resultado = (int) ((float)a/(float)b);
+                                RESULT = resultado;
+                            }else{
+                                if(comprobadorTipos.isNumero(a)){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+            |valor:a POT valor:b {:RESULT = a;:}
+            |PARENTESIS_A valor:a PARENTESIS_C {:RESULT = a;:}
+            |IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                RESULT = tablaSimbolos.getSimboloValor();
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :}
+            |VALOR:a {:RESULT = a;:}
+            |TEXTO:a {:RESULT = a;:}
+            |NUMERO:a {:RESULT = a;:}; 
 
-parametros ::=   IDENTIFICADOR params
+funcion ::= DEF:a {:
+                    if(ambitoContador>0){
+                        erroresSemanticos.add(new ErrorG("DEF",aright+1,aleft+1,2,"Error de identacion, los funciones no deben de tener Tabulacion"));
+                    }else{
+                        comprobadorAmbito.verificarAmbito(ambitoFlag,ambitoActual,ambitoContador);actualizarAmbitos();
+                    }
+            :} IDENTIFICADOR PARENTESIS_A parametros PARENTESIS_C DOS_PUNTOS SALTO;
+                        
+parametros ::=   IDENTIFICADOR:a {:
+                            switch(comprobadorTipos.getValorTipo(0)){
+                                case 1:
+                                    Simbolo s = new Simbolo((String)a,"Integer",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s);
+                                    break;
+                                case 2:
+                                    Simbolo s1 = new Simbolo((String)a,"Float",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s1);
+                                    break;
+                                case 3:
+                                    Simbolo s2 = new Simbolo((String)a,"Char",ambitoActual,'c');
+                                    tablaSimbolos.agregarSimbolo(s2);
+                                    break;
+                            }:} params
                 |;
 
-params ::=   COMA IDENTIFICADOR
+params ::=   COMA IDENTIFICADOR:a {:
+                        if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
+                            
+                            switch(comprobadorTipos.getValorTipo(0)){
+                                case 1:
+                                    tablaSimbolos.setSimboloPY(0,"Integer");
+                                    break;
+                                case 2:
+                                    tablaSimbolos.setSimboloPY(0,"Float");
+                                    break;
+                                case 3:
+                                    tablaSimbolos.setSimboloPY(0,"Char");
+                                    break;
+                            }
+                        }else{
+                            switch(comprobadorTipos.getValorTipo(0)){
+                                case 1:
+                                    Simbolo s = new Simbolo((String)a,"Integer",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s);
+                                    break;
+                                case 2:
+                                    Simbolo s1 = new Simbolo((String)a,"Float",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s1);
+                                    break;
+                                case 3:
+                                    Simbolo s2 = new Simbolo((String)a,"Char",ambitoActual,'c');
+                                    tablaSimbolos.agregarSimbolo(s2);
+                                    break;
+                            }
+                        }
+                        :}
             |;
 
 codigo_def ::= declaracion_var;
@@ -129,8 +291,30 @@ tabs ::= TAB tabs:a {:RESULT = 1+(int) a;:}
 ciclos ::=   struct_for
             |struct_while;
 
-struct_for ::=   FOR IDENTIFICADOR IN datos_for DOS_PUNTOS SALTO
-                |FOR GUION_BAJO IN datos_for DOS_PUNTOS SALTO;
+struct_for ::=   FOR:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} IDENTIFICADOR:b {:
+                            switch(comprobadorTipos.getValorTipo(0)){
+                                case 1:
+                                    Simbolo s = new Simbolo((String)b,"Integer",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s);
+                                    break;
+                                case 2:
+                                    Simbolo s1 = new Simbolo((String)b,"Float",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s1);
+                                    break;
+                                case 3:
+                                    Simbolo s2 = new Simbolo((String)b,"Char",ambitoActual,0);
+                                    tablaSimbolos.agregarSimbolo(s2);
+                                    break;
+                            }:} IN datos_for DOS_PUNTOS SALTO
+                |FOR:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG("DEF",aright+1,aleft+1,2,"Error de identacion, loa funciones no deben de tener Tabulacion"));
+                    }
+                :} GUION_BAJO IN datos_for DOS_PUNTOS SALTO;
 
 datos_for ::=    TEXTO
                 |NUMERO
@@ -142,7 +326,11 @@ dato ::= TEXTO
 mas_datos ::= COMA dato mas_datos
             | ;
 
-struct_while ::= WHILE condicion DOS_PUNTOS SALTO;
+struct_while ::= WHILE:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} condicion DOS_PUNTOS SALTO;
 
 
 condicion ::= not condiciones pre;
@@ -164,15 +352,45 @@ not ::=  NOT
 
 condicionales ::= struc_if;
 
-struc_if ::= IF condicion DOS_PUNTOS SALTO
-            |ELSE_IF condicion DOS_PUNTOS SALTO
-            |ELSE;
+struc_if ::= IF:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} condicion DOS_PUNTOS SALTO
+            |ELSE_IF:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} condicion DOS_PUNTOS SALTO
+            |ELSE:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :};
 
-mensajes ::= PRINT val PARENTESIS_C SALTO;
+mensajes ::= PRINT:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} val PARENTESIS_C SALTO;
 
-solicitud ::=    INTINPUT PARENTESIS_A val PARENTESIS_C
-                |FLOATINPUT PARENTESIS_A val PARENTESIS_C
-                |CHARINPUT PARENTESIS_A val PARENTESIS_C;
+solicitud ::=    INTINPUT:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} PARENTESIS_A val PARENTESIS_C {:RESULT = (int)0;:}
+                |FLOATINPUT:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }
+                :} PARENTESIS_A val PARENTESIS_C {:RESULT = (float)0.0;:}
+                |CHARINPUT:a {:
+                    if(ambitoContador==0){
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                    }/*else{
+                        comprobadorAmbito.verificarAmbito(ambitoFlag,ambitoActual,ambitoContador);actualizarAmbitos();
+                    }*/
+                :} PARENTESIS_A val PARENTESIS_C {:RESULT = (char)'c';:};
 
 val ::= valor
         |;

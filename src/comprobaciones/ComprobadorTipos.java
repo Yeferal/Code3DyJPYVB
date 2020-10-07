@@ -4,8 +4,17 @@ package comprobaciones;
 public class ComprobadorTipos {
     /*
     1. INTEGER
-    2. DECIMAL
+    2. FLOAT
     3. CHAR
+    4. ARRAY_INT
+    5. ARRAY_FLOAT
+    6. ARRAY_CHAR
+    7. CONST_INT
+    8. CONST_FLOAT
+    9. CONST_CHAR
+    10. FUNCTION
+    11. CLASE
+    0. 
     */
     
     
@@ -94,6 +103,19 @@ public class ComprobadorTipos {
                 break;
         }
         return false;
+    }
+    
+    public int getValorTipo(Object valor){
+        if(isInteger(valor)){
+            return 1;
+        }
+        if(isFloat(valor)){
+            return 2;
+        }
+        if(isChar(valor+"")){
+            return 3;
+        }
+        return 0;
     }
     public String determinarTipo(Object valor){
                 if(isInteger(valor)){
