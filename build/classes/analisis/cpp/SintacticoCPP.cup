@@ -157,7 +157,7 @@ struc_vars ::=   INT {:tipoV="Integer";:} struc_asig_vars_n PUNTO_COMA
                 |IDENTIFICADOR:a IGUAL var_senten:b PUNTO_COMA  {:
                             if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
                                 Simbolo s = tablaSimbolos.getSimbolo();
-                                System.out.println("Valor-=======================================-=---------------"+b);
+                                //System.out.println("Valor-=======================================-=---------------"+b);
                                 if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
                                     tablaSimbolos.setSimbolo(b);
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}

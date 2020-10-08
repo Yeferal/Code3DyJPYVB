@@ -1,17 +1,21 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package tresdirecciones;
 
 import java.util.ArrayList;
 
-/**
- *
- * @author LENOVO-PC
- */
 public class TablaCuartetos {
+    /*-->Operacion<--
+    1. IF (<,>,=,<=,>=,<>)
+    2. GOTO
+    3. ETIQUETA
+    4. SUMA
+    5. RESTAR
+    6. POR
+    7. DIV
+    8. PRINT
+    9. CONCAT
+    */
+    
     
     private ArrayList<Cuarteto> listaCuartetos = new ArrayList<>();
     
@@ -20,7 +24,7 @@ public class TablaCuartetos {
     }
     
     public void pintar(){
-        System.out.println("No.\tOperacion\t\tVAL_1\tVAL_2\tValor");
+        System.out.println("No.\tOperacion\tVAL_1\t\tVAL_2\tValor");
         for (int i = 0; i < listaCuartetos.size(); i++) {
             System.out.println((i+1)+listaCuartetos.get(i).toString());
         }

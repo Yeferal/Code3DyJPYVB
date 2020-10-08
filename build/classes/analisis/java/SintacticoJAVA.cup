@@ -119,7 +119,7 @@ struc_vars ::=   INT {:tipoV="Integer";:} struc_asig_vars_n PUNTO_COMA
                 |IDENTIFICADOR:a IGUAL valor:b PUNTO_COMA {:
                             if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
                                 Simbolo s = tablaSimbolos.getSimbolo();
-                                System.out.println("Valor-=======================================-=---------------"+b);
+                                //System.out.println("Valor-=======================================-=---------------"+b);
                                 if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
                                     tablaSimbolos.setSimbolo(b);
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
@@ -212,7 +212,7 @@ struct_for_return ::= FOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbi
 struc_indices ::= IDENTIFICADOR:a IGUAL valor_n:b PUNTO_COMA {:
                             if(tablaSimbolos.isExistSimboloJ(comprobadorAmbito.ambitosCamino, (String) a)){
                                 Simbolo s = tablaSimbolos.getSimbolo();
-                                System.out.println("Valor-=======================================-=---------------"+b);
+                                //System.out.println("Valor-=======================================-=---------------"+b);
                                 if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
                                     tablaSimbolos.setSimbolo(b);
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
@@ -330,7 +330,7 @@ valor_condicional ::=    valor MENOR_QUE valor
                         |valor DIFERENTE valor;
 
 
-valor ::=    valor:a MAS valor:b {:
+valor ::=    valor:a MAS:c valor:b {:
                         if(a!=null && b!=null){
                             if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
                                 if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
@@ -343,7 +343,7 @@ valor ::=    valor:a MAS valor:b {:
                             }
                         }else{RESULT = null;}
                 :}
-            |valor:a MENOS valor:b {:
+            |valor:a MENOS:c valor:b {:
                         if(a!=null && b!=null){
                             if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
                                 if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
@@ -356,7 +356,7 @@ valor ::=    valor:a MAS valor:b {:
                             }
                         }else{RESULT = null;}
                 :}
-            |valor:a POR valor:b {:
+            |valor:a POR:c valor:b {:
                         if(a!=null && b!=null){
                             if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
                                 if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
@@ -369,7 +369,7 @@ valor ::=    valor:a MAS valor:b {:
                             }
                         }else{RESULT = null;}
                 :}
-            |valor:a DIV valor:b {:
+            |valor:a DIV:c valor:b {:
                         if(a!=null && b!=null){
                             if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
                                 if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){

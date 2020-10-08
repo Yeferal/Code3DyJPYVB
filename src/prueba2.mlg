@@ -4,11 +4,11 @@ public sub hola()
     Dim N as integer
     Dim c as integer
     Dim f as float
-    Dim Fact, Num As Integer
+    Dim Fact, Factorial, Num As Integer
     N = 10
     Num = N
     f = 5/(1+1)
-    If N = 0 Then
+    If N = 0 and 5< 5+5 or 5=5 Then
     	Dim hola as integer
         Factorial = 1
     ELSEIF N < 0 THEN
@@ -20,18 +20,18 @@ public sub hola()
         como = 5
         Fact = 1
         While N > 1
-            Dim fact as integer
+            'Dim fact as integer
             Fact = como * N
             N = N - 1
        	wENd
 	Factorial = Fact
 	Select CASE como
             CASE 8
-		Dim como as integer
+		'Dim como as integer
             CASE 9
-		dim como as integer
+		'dim como as integer
             CASE else
-		dim como as integer
+		'dim como as integer
 	END select
     End If
     FOR c = 8 To 15
@@ -43,16 +43,17 @@ public sub hola()
 End sub
 
 Function Factorial(N As Integer) as integer
-    Dim Fact, Num As Integer
+    Dim Fact,Factorial, Num As Integer
+    N = 5
     Num = N
     If N = 0 Then
 	Factorial = 1
     Else
         Fact = 1
         Do
-            Fact = Fact * N
+            'Fact = Fact * N _
             N = N - 1
-                Dim Fact, Num As Integer
+                'Dim Fact, Num As Integer
     		Num = N
     		If N = 0 Then
                     Factorial = 1

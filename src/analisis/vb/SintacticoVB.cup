@@ -2,10 +2,12 @@
 package analisis.vb;
 import comprobaciones.ComprobadorAmbito;
 import comprobaciones.ComprobadorTipos;
+import comprobaciones.Nodo;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import simbolos.Simbolo;
 import simbolos.TablaSimbolos;
+import tresdirecciones.*;
 import errores.ErrorG;
 
 //Codigo para el parser, variables, metodos
@@ -14,7 +16,7 @@ parser code
     
     public TablaSimbolos tablaSimbolos = new TablaSimbolos();
     public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
-    
+    public TablaCuartetos tablaCuartetos = new TablaCuartetos();
     
     
     
@@ -50,11 +52,27 @@ action code
     ComprobadorTipos comprobadorTipos = new ComprobadorTipos();
     ComprobadorAmbito comprobadorAmbito = new ComprobadorAmbito();
     ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    TablaCuartetos tablaCuartetos = new TablaCuartetos();
     int ambitoFlag = 0;
     int ambitoActual = 0;
+    int contadorEVT = 0;
+    int banderaEVT = 0;
+    int contadorET = 0;
+    int banderaET = 0;
+    String op = "";
     String tipoV = "";
+    String codigo3D = "";
     ArrayList<Integer> ambitos = new ArrayList<>();
     TablaSimbolos tablaSimbolos = new TablaSimbolos();
+
+    public String tabs(){
+        String t = "";
+        for(int i = 0; i<comprobadorAmbito.ambitosCamino.size(); i++){
+            t += "\t";
+        }
+        return "";
+    }
+
 :}
 
 //Declaraciones 
@@ -95,7 +113,12 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_VB {:ambitoFlag=0;ambitoActual=ambitoFlag;:} codigo SEPARADOR_PROGRAMA {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:}
+INICIO ::=   SEPARADOR_VB {:ambitoFlag=0;ambitoActual=ambitoFlag;:} codigo SEPARADOR_PROGRAMA {:
+                            parser.tablaSimbolos = tablaSimbolos; 
+                            parser.erroresSemanticos = erroresSemanticos; 
+                            parser.tablaCuartetos = tablaCuartetos; 
+                            
+                            System.out.println(codigo3D);:}
             |WHILE;
 
 /*codigo ::=   COMENTARIO
@@ -115,23 +138,27 @@ bloque_declararion_var ::=   DIM IDENTIFICADOR:b tipo_declaracion:a {:Simbolo au
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                             RESULT = aux;
                         :}
-                            |DIM IDENTIFICADOR:b IGUAL s4:a {: String tipo = null;
+                            |DIM IDENTIFICADOR:b IGUAL s4:a {: String tipo = null; Nodo nodeA = (Nodo)a;
                             if(a!=null){
-                                tipo = comprobadorTipos.determinarTipo(a);
+                                tipo = comprobadorTipos.determinarTipo(nodeA.getValor());
                             }
                             if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
+                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
                                 if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                     tablaSimbolos.agregarSimbolo(s);
+                                    codigo3D += tabs()+(String)b+" := "+nodeA.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
                                 }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                             }
                         :}
-                            |IDENTIFICADOR:a IGUAL s4:b  {:
+                            |IDENTIFICADOR:a IGUAL s4:b  {:Nodo nodeB = (Nodo)b;
                             if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
                                 Simbolo s = tablaSimbolos.getSimbolo();
-                                System.out.println("Valor-=======================================-=---------------"+b);
-                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
-                                    tablaSimbolos.setSimbolo(b);
+                                //System.out.println("Valor-=======================================-=---------------"+b);
+                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
+                                    tablaSimbolos.setSimbolo(nodeB.getValor());
+                                    codigo3D += tabs()+(String)a+" := "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeB.getText(),"",(String)a,0));
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
                                 
                             }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
@@ -197,11 +224,12 @@ struc_ciclos ::= struc_for {:comprobadorAmbito.sacarAmbito();:}
                 | {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} struc_while {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
 struc_for ::= FOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} IDENTIFICADOR:a IGUAL operacion:b {:
+                            Nodo nodeB = (Nodo)b;
                             if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
                                 Simbolo s = tablaSimbolos.getSimbolo();
-                                System.out.println("Valor-=======================================-=---------------"+b);
-                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), b)){
-                                    tablaSimbolos.setSimbolo(b);
+                                //System.out.println("Valor-=======================================-=---------------"+b);
+                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
+                                    tablaSimbolos.setSimbolo(nodeB.getValor());
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
                                 
                             }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
@@ -221,7 +249,11 @@ struc_while ::=  WHILE condicionales SALTO s8 WEND SALTO
                 |DO WHILE condicionales SALTO s8 LOOP
                 |DO UNTIL condicionales SALTO s8 LOOP;
 
-struc_if ::= IF condicionales THEN SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 struc_else_if END IF SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
+struc_if ::= IF condicionales {:
+                            //Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET-1),"","",3));
+                            codigo3D += "et"+(contadorET)+":"+"\n";
+                    :} THEN SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 struc_else_if END IF SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
 struc_else_if ::=    ELSE SALTO {:comprobadorAmbito.sacarAmbito();ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8  {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
                     |ELSE_IF {:comprobadorAmbito.sacarAmbito();ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} condicionales THEN SALTO s8 struc_else_if
@@ -240,45 +272,134 @@ s1 ::=   casos
 s2 ::=   COMA operacion s2
         |;
 
-condicionales ::=    condicion_xtra;
+condicionales ::=    condicion_xtra:a {::};
 
-condicionales_1 ::=  operacion MENOR_QUE operacion
-                    |operacion MAYOR_QUE operacion
-                    |operacion MENOR_IGUAL operacion
-                    |operacion MAYOR_IGUAL operacion
-                    |operacion IGUAL operacion
-                    |operacion DIFERENTE operacion;
-
-condicion_xtra ::=   condicion_xtra AND condicion_xtra 
-                    |condicion_xtra OR condicion_xtra
-                    |PARENTESIS_A condicion_xtra PARENTESIS_C
-                    |NOT PARENTESIS_A condicion_xtra PARENTESIS_C
-                    |condicionales_1;
-
-operacion ::=    operacion:a MAS operacion:b {:
+condicionales_1 ::=  operacion:a MENOR_QUE operacion:b {: 
                         if(a!=null && b!=null){
-                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
-                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
-                                    int resultado = (int) ((int)a+(int)b); RESULT = resultado;
-                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)+(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            Cuarteto c = new Cuarteto("IF<",nodeA.getText(),nodeB.getText(),"<",0 );
+                            RESULT = c;
+                        }
+                    :}
+                    |operacion:a MAYOR_QUE operacion:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            Cuarteto c = new Cuarteto("IF>",nodeA.getText(),nodeB.getText(),">",0 );
+                            RESULT = c;
+                        }
+                    :}
+                    |operacion:a MENOR_IGUAL operacion:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            Cuarteto c = new Cuarteto("IF<=",nodeA.getText(),nodeB.getText(),"<=",0 );
+                            RESULT = c;
+                        }
+                    :}
+                    |operacion:a MAYOR_IGUAL operacion:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            Cuarteto c = new Cuarteto("IF>=",nodeA.getText(),nodeB.getText(),">=",0 );
+                            RESULT = c;
+                        }
+                    :}
+                    |operacion:a IGUAL operacion:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            Cuarteto c = new Cuarteto("IF==",nodeA.getText(),nodeB.getText(),"==",0 );
+                            RESULT = c;
+                        }
+                    :}
+                    |operacion:a DIFERENTE operacion:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            Cuarteto c = new Cuarteto("IF<>",nodeA.getText(),nodeB.getText(),"<>",0 );
+                            RESULT = c;
+                        }
+                    :};
+
+condicion_xtra ::=   condicion_xtra:a AND {:
+                            //Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET-1),"","",3));
+                            codigo3D += "et"+(contadorET-1)+":"+"\n";
+                            op = "";
+                    :} condicion_xtra:b {:
+                        if(a!=null && b!=null){
+                            Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
+                            //tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET-1),"","",3));
+                            //codigo3D += "et"+(contadorET-1)+":"+"\n";
+                            
+                        }
+                        
+                    :} 
+                    |condicion_xtra:a OR {:
+                            //Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET),"","",3));
+                            codigo3D += "et"+(contadorET)+":"+"\n";
+                    :} condicion_xtra:b
+                    |PARENTESIS_A condicion_xtra:a PARENTESIS_C
+                    |NOT PARENTESIS_A condicion_xtra:a PARENTESIS_C
+                    |condicionales_1:a {:
+                        if(a!=null){
+                            Cuarteto c = (Cuarteto)a;
+                            contadorET++;
+                            codigo3D += "if "+c.getValor1()+c.getValorP()+c.getValor2()+" goto et"+contadorET+"\n";
+                            tablaCuartetos.agregarCuarteto(new Cuarteto(c.getOperacion(),c.getValor1(),c.getValor2()," goto et"+contadorET,1));
+                            contadorET++;
+                            codigo3D += "goto et"+contadorET+"\n";
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("GOTO","",""," goto et"+contadorET,2));
+                            RESULT = new Cuarteto("GOTO",(contadorET-1)+"",contadorET+"","",0);
+                        }
+                    :};
+
+operacion ::=    operacion:a MAS operacion:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
+                                    int resultado = (int) ((int)nodeA.getValor()+(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SUMA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,4));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())+(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }
                             }else{
-                                String texto = a +""+ b; RESULT = texto;
+                                contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
+                                    //RESULT = new Nodo("t"+contadorEVT,resultado);
+                                String texto = nodeA.getValor() +""+ nodeB.getValor(); RESULT = new Nodo(texto,texto);
                             }
                         }else{RESULT = null;}
                 :}
-                |operacion:a AND_RESRV operacion:b {:
+                |operacion:a AND_RESRV operacion:b {: 
                         if(a!=null && b!=null){
-                            String texto = a +""+b; RESULT = texto;
+                            contadorEVT++;
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                            
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
+                            String texto = nodeA.getValor() +""+nodeB.getValor(); RESULT = new Nodo(texto,texto);
                         }else{RESULT = null;}
                 :}
                 |operacion:a MENOS:c operacion:b {:
                         if(a!=null && b!=null){
-                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
-                                if(comprobadorTipos.isInteger(a) && comprobadorTipos.isInteger(b)){
-                                    int resultado = (int) ((int)a-(int)b); RESULT = resultado;
-                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)-(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;}
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
+                                    int resultado = (int) ((int)nodeA.getValor()-(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" - "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("RESTA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,5));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())-(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" - "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("RESTA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,5));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);}
                             }else{
-                                if(comprobadorTipos.isNumero(a)){
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
                                     erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
                                 }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
                             }
@@ -286,25 +407,38 @@ operacion ::=    operacion:a MAS operacion:b {:
                 :}
                 |operacion:a POR:c operacion:b {:
                         if(a!=null && b!=null){
-                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
-                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
-                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)*(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
-                                }else{int resultado = (int) ((int)a*(int)b); RESULT = resultado;}
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(!(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor()))){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())*(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" * "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("POR",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,6));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{int resultado = (int) ((int)nodeA.getValor()*(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" * "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("POR",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,6));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);}
                             }else{
-                                if(comprobadorTipos.isNumero(a)){
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
                                     erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
                                 }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
                             }
                         }else{RESULT = null;}
                 :}
-                |operacion:a DIV:c operacion:b {:
+                |operacion:a DIV:c operacion:b {: 
                         if(a!=null && b!=null){
-                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
-                                if(comprobadorTipos.isFloat(a) || comprobadorTipos.isFloat(b)){
-                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(a)/(float)comprobadorTipos.convertirFlotante(b)); RESULT = resultado;
-                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)a/(int)b); RESULT = resultado;}
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                contadorEVT++;
+                                codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" / "+nodeB.getText()+"\n";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("DIV",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,7));
+                                if(comprobadorTipos.isFloat(nodeA.getValor()) || comprobadorTipos.isFloat(nodeB.getValor())){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())/(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)nodeA.getValor()/(int)nodeB.getValor()); RESULT = new Nodo("t"+contadorEVT,resultado);}
                             }else{
-                                if(comprobadorTipos.isNumero(a)){
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
                                     erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
                                 }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
                             }
@@ -312,28 +446,32 @@ operacion ::=    operacion:a MAS operacion:b {:
                 :}
                 |operacion:a DIV_ENTERO:c operacion:b {:
                         if(a!=null && b!=null){
-                            if(comprobadorTipos.isNumero(a) && comprobadorTipos.isNumero(b)){
-                                int resultado = (int) ((float)a/(float)b);
-                                RESULT = resultado;
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                contadorEVT++;
+                                codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" / "+nodeB.getText()+"\n";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("DIV",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,7));
+                                int resultado = (int) ((float)nodeA.getValor()/(float)nodeB.getValor());
+                                RESULT = new Nodo("t"+contadorEVT,resultado);
                             }else{
-                                if(comprobadorTipos.isNumero(a)){
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
                                     erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
                                 }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
                             }
                         }else{RESULT = null;}
                 :}
-                |operacion:a POT operacion:b {:RESULT = a;:}
+                |operacion:a POT operacion:b {:RESULT = new Nodo((float)a+"",(float)a);:}
                 |PARENTESIS_A operacion:a PARENTESIS_C {:RESULT = a;:}
                 |CORCHETE_A operacion:a CORCHETE_C {:RESULT = a;:}
                 |LLAVES_A operacion:a LLAVES_C {:RESULT = a;:}
                 |IDENTIFICADOR:a {:
                             if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
-                                RESULT = tablaSimbolos.getSimboloValor();
+                                RESULT = new Nodo((String) a,tablaSimbolos.getSimboloValor());
                             }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
                 :}
-                |NUMERO:a {:RESULT = (Integer)a;:}
-                |DECIMAL:a {:RESULT = (float)a;:}
-                |VALOR:a {:RESULT = (String)a;:};
+                |NUMERO:a {:RESULT = new Nodo((Integer)a+"",(Integer)a);:}
+                |DECIMAL:a {:RESULT = new Nodo((float)a+"",(float)a);:}
+                |VALOR:a {:RESULT = new Nodo((String)a,(String)a);:};
 
 
 sentencias_1 ::=   mensajes SALTO

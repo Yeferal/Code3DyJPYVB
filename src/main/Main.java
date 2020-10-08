@@ -53,9 +53,9 @@ public class Main {
         AnalizadorSintacticoIm analizadorSintacticoIm = new AnalizadorSintacticoIm(analizadorLexicoIm);
         try {
             analizadorSintacticoVB.parse();
-            analizadorSintacticoJAVA.parse();
-            analizadorSintacticoPY.parse();
-            analizadorSintacticoCPP.parse();
+//            analizadorSintacticoJAVA.parse();
+//            analizadorSintacticoPY.parse();
+//            analizadorSintacticoCPP.parse();
             
             //analizadorSintacticoIm.parse();
             
@@ -76,7 +76,7 @@ public class Main {
         System.out.println("\nErrores VB");
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
-        }
+        }/*
         System.out.println("\nErrores JAVA");
         for (int i = 0; i < analizadorSintacticoJAVA.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoJAVA.erroresSemanticos.get(i).toString());
@@ -88,8 +88,13 @@ public class Main {
         System.out.println("\nErrores PROGRAMA PRINCIPAL");
         for (int i = 0; i < analizadorSintacticoCPP.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());
-        }
+        }*/
         System.out.println("");
+        
+        System.out.println("\nCuartetos VB");
+        analizadorSintacticoVB.tablaCuartetos.pintar();
+        
+        //System.out.println(codigo3D);
         ComprobadorTipos c = new ComprobadorTipos();
         ComprobadorAmbito ca = new ComprobadorAmbito();
         //c.isNumero("55.00");
@@ -104,20 +109,20 @@ public class Main {
         //int in = 5/2;
         //float g = (float) o1;
         //System.out.println("Hola2: "+g+"\n");
-        int t = (int) 2.5;
+        //int t = (int) 2.5;
         //c.tiparObjeto((float)5/2);
-        int ambitoFlag = 2;
+        //int ambitoFlag = 2;
         //ca.verificarAmbito(ambitoFlag, 10, 2);
         
-        System.out.println("Ambito Nuevo: "+ambitoFlag);
+        //System.out.println("Ambito Nuevo: "+ambitoFlag);
         //float dx = (float) c.sumar((float)2.2,3);
         //double xd = (float) dx;
         //System.out.println("Hola: "+c.dividir(5,2));
         //System.out.println("NUMERO: "+c.getTipoSimbolo(o));
-        
-        if (!(5<4)) {
+        /*
+        if (!(5<=4)) {
             System.out.println("\nhLLLL: "+((float)5/(float)2)+", MODULO: "+((float)2.5%(float)2));
-        }
+        }*/
         
     }
     
