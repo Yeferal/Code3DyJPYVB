@@ -16,6 +16,7 @@ parser code
     
     public TablaSimbolos tablaSimbolos = new TablaSimbolos();
     public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    public ArrayList<ErrorG> erroresSintactico = new ArrayList<>();
     public TablaCuartetos tablaCuartetos = new TablaCuartetos();
     
     
@@ -37,8 +38,9 @@ parser code
             if(s!=null){
                 //ErrorG e = new ErrorG(s.right,s.left,(String) s.value,"Sintactico","Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
                 //listaErrores.add(e);
-                /*Error error = new Error((String) s.value,s.right, s.left, 2, "Error Sintaxis token: "+(String) s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
-                erroresSintacticos.add(error);*/
+                ErrorG error = new ErrorG( s.value+"",(s.right+1),(s.left+1), 2, "Error Sintaxis token: "+ s.value+" ------ Linea: " + (s.right+1) + ",   Columna: " + (s.left+1));
+                //erroresSemanticos.add(error);
+                erroresSintactico.add(error);
                 setAccion("ERROR","Error Sintaxis token: Linea: " + (s.right+1) + ",   Columna: " + (s.left+1) + ",  Simbolo: " + s.value, "");
             }
     }
@@ -59,6 +61,7 @@ action code
     int banderaEVT = 0;
     int contadorET = 0;
     int banderaET = 0;
+    int flagET = 0;
     String op = "";
     String tipoV = "";
     String codigo3D = "";
@@ -97,7 +100,7 @@ non terminal valor, tipo_declaracion, struc_select, struc_if, struc_while, struc
 non terminal struc_ciclos, struc_condicionales, struc_procedimientos, struc_modulos, struc_funciones;
 non terminal operacion, condicionales, condicion_xtra, condicionales_1;
 non terminal opcion_step, sentencias, casos, s1, s2, struc_else_if, mensajes, inputs_dato;
-non terminal s3, s4, s5, parametros, s6, s7, s8, sentencias_1, s9;
+non terminal s3, s4, s5, parametros, s6, s7, s8, sentencias_1, s9, err, operacion_switch;
 //non terminal ;
 
 //presedencia de menor a mayor
@@ -119,7 +122,9 @@ INICIO ::=   SEPARADOR_VB {:ambitoFlag=0;ambitoActual=ambitoFlag;:} codigo SEPAR
                             parser.tablaCuartetos = tablaCuartetos; 
                             
                             System.out.println(codigo3D);:}
-            |WHILE;
+            |error:e {:parser.syntax_error((Symbol)e); :} err;
+
+err ::= ;
 
 /*codigo ::=   COMENTARIO
             |struc_modulos SALTO codigo
@@ -129,7 +134,8 @@ codigo ::=   struc_funciones codigo
             |struc_procedimientos codigo
             |COMENTARIO codigo
             |SALTO codigo
-            |; 
+            | 
+            |error:e {:parser.syntax_error((Symbol)e); :} codigo; 
 
 bloque_declararion_var ::=   DIM IDENTIFICADOR:b tipo_declaracion:a {:Simbolo aux = (Simbolo)a;
                             Simbolo s = new Simbolo((String)b,aux.getTipo(),ambitoActual,null);
@@ -204,7 +210,8 @@ s7 ::=   bloque_declararion_var s7
         |struc_procedimientos s7
         |COMENTARIO s7
         |SALTO
-        |;
+        |
+        |error:e {:parser.syntax_error((Symbol)e); :} s7;
 
 s9 ::= SALTO s9
         |;
@@ -223,56 +230,382 @@ parametros ::=   IDENTIFICADOR:a AS tipo_datos:b {:Simbolo s = new Simbolo((Stri
 struc_ciclos ::= struc_for {:comprobadorAmbito.sacarAmbito();:}
                 | {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} struc_while {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
-struc_for ::= FOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} IDENTIFICADOR:a IGUAL operacion:b {:
+struc_for ::= FOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} IDENTIFICADOR:a AS INTEGER IGUAL operacion:b {:
                             Nodo nodeB = (Nodo)b;
-                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
-                                Simbolo s = tablaSimbolos.getSimbolo();
-                                //System.out.println("Valor-=======================================-=---------------"+b);
-                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
-                                    tablaSimbolos.setSimbolo(nodeB.getValor());
+                            if(!tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                Simbolo s = new Simbolo((String)a,"Integer",ambitoActual,nodeB.getValor());
+                                if(comprobadorTipos.isInteger(nodeB.getValor()) && comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
+                                    tablaSimbolos.agregarSimbolo(s);
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeB.getText(),"",(String)a,0));
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
                                 
                             }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
                         :}
-                    TO operacion opcion_step SALTO s8 NEXT IDENTIFICADOR:aa {:
-                            if(!tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) aa)){
+                    TO {:
+                            contadorET++;
+                            tablaCuartetos.apilar(contadorET);
+                            Cuarteto cEt = new Cuarteto("ETIQUETA","et"+contadorET,"","",3);
+                            tablaCuartetos.agregarCuarteto(cEt);
+                :} operacion:c {: Nodo nodeC = (Nodo)c;
+                            if(comprobadorTipos.isInteger(nodeC.getValor())){
+                                contadorET++;
+                                Cuarteto cuarteto = new Cuarteto("IF<",(String)a, nodeC.getValor()+"","got et"+contadorET,1);   tablaCuartetos.agregarCuarteto(cuarteto);
+                                contadorET++;
+                                Cuarteto gt = new Cuarteto("GOTO","", "","et"+contadorET,2);   tablaCuartetos.agregarCuarteto(gt);
+                                Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+(contadorET-1),"", "",2);   tablaCuartetos.agregarCuarteto(etiqueta);
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+                            
+                    :} opcion_step:d SALTO s8 NEXT IDENTIFICADOR:aa {:
+                            if(!tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) aa) || !a.equals(aa)){
                                 erroresSemanticos.add(new ErrorG((String)aa,aaright+1,aaleft+1,3,"La Varaible \""+(String)aa+"\" no ha sido declarada dentro del ambito"));
                             }
+                            Cuarteto operacion = (Cuarteto)d; operacion.setValor1((String)a); operacion.setValorP((String)a); tablaCuartetos.agregarCuarteto(operacion);
+                            Cuarteto cEt = new Cuarteto("GOTO","","","et"+tablaCuartetos.obtenerUltimo(),2);
+                            tablaCuartetos.agregarCuarteto(cEt);
+                            Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+operacion.getGoTo(),"", "",2);   tablaCuartetos.agregarCuarteto(etiqueta);
                         :} SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
-opcion_step ::=   STEP operacion
-                |;
+opcion_step ::=   STEP operacion:a {: Nodo nodeA = (Nodo)a;
+                            if(comprobadorTipos.isInteger(nodeA.getValor())){
+                                Cuarteto cuarteto = new Cuarteto("SUMA","",nodeA.getValor()+"","",0); cuarteto.setGoTo(contadorET); RESULT = cuarteto;
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+                            :}
+                | {:Cuarteto cuarteto = new Cuarteto("SUMA","", 1+"","",0); cuarteto.setGoTo(contadorET); RESULT = cuarteto;:};
 
-struc_while ::=  WHILE condicionales SALTO s8 WEND SALTO
-                |DO SALTO s8 LOOP WHILE condicionales SALTO
-                |DO SALTO s8 LOOP UNTIL condicionales SALTO
-                |DO WHILE condicionales SALTO s8 LOOP
-                |DO UNTIL condicionales SALTO s8 LOOP;
+struc_while ::=  WHILE:f {:
+                            contadorET++;
+                            tablaCuartetos.apilar(contadorET);
+                            Cuarteto cEt = new Cuarteto("ETIQUETA","et"+contadorET,"","",3);
+                            tablaCuartetos.agregarCuarteto(cEt);
+                :} condicionales:a {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                    if(cA.getC1().getTipo()==0){
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getEtiqueta(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }else{
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getGoTo(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                    
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }*/
+                            }
+                    :} SALTO s8 {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                Cuarteto cEt = new Cuarteto("GOTO","","","et"+tablaCuartetos.obtenerUltimo(),2);
+                                tablaCuartetos.agregarCuarteto(cEt);
+                                if(cA.getTipo()==0){
+                                    //Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("ETIQUETA", "et"+cA.getC1().getGoTo(), "", "",3);
+                                    //tablaCuartetos.agregarCuarteto(c);
+                                    tablaCuartetos.agregarCuarteto(cg);
+                                    codigo3D += "et:"+cA.getC1().getGoTo()+":"+"\n";
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }else if(cA.getTipo()==4){
+                                    
+                                }*/
+                            }
+                    :} WEND SALTO {:
+                            
+                :}
+                |DO SALTO {:
+                            contadorET++;
+                            tablaCuartetos.apilar(contadorET);
+                            Cuarteto cEt = new Cuarteto("ETIQUETA","et"+contadorET,"","",3);
+                            tablaCuartetos.agregarCuarteto(cEt);
+                :} s8 LOOP WHILE condicionales:a {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                    if(cA.getC1().getTipo()==0){
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getEtiqueta(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }else{
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getGoTo(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                    
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }
+                                Cuarteto cEt = new Cuarteto("GOTO","","","et"+tablaCuartetos.obtenerUltimo(),2);
+                                tablaCuartetos.agregarCuarteto(cEt);
+                            }
+                    :} SALTO {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    //Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("ETIQUETA", "et"+cA.getC1().getGoTo(), "", "",3);
+                                    //tablaCuartetos.agregarCuarteto(c);
+                                    tablaCuartetos.agregarCuarteto(cg);
+                                    codigo3D += "et:"+cA.getC1().getGoTo()+":"+"\n";
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }else if(cA.getTipo()==4){
+                                    
+                                }*/
+                            }
+                    :}
+                |DO WHILE{:
+                            contadorET++;
+                            tablaCuartetos.apilar(contadorET);
+                            Cuarteto cEt = new Cuarteto("ETIQUETA","et"+contadorET,"","",3);
+                            tablaCuartetos.agregarCuarteto(cEt);
+                :} condicionales:a {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                    if(cA.getC1().getTipo()==0){
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getEtiqueta(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }else{
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getGoTo(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                    
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }*/
+                            }
+                    :} SALTO s8 {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                Cuarteto cEt = new Cuarteto("GOTO","","","et"+tablaCuartetos.obtenerUltimo(),2);
+                                tablaCuartetos.agregarCuarteto(cEt);
+                                if(cA.getTipo()==0){
+                                    //Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("ETIQUETA", "et"+cA.getC1().getGoTo(), "", "",3);
+                                    //tablaCuartetos.agregarCuarteto(c);
+                                    tablaCuartetos.agregarCuarteto(cg);
+                                    codigo3D += "et:"+cA.getC1().getGoTo()+":"+"\n";
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }else if(cA.getTipo()==4){
+                                    
+                                }*/
+                            }
+                    :} LOOP
+                |DO UNTIL{:
+                            contadorET++;
+                            tablaCuartetos.apilar(contadorET);
+                            Cuarteto cEt = new Cuarteto("ETIQUETA","et"+contadorET,"","",3);
+                            tablaCuartetos.agregarCuarteto(cEt);
+                :} condicionales:a {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                    if(cA.getC1().getTipo()==0){
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getEtiqueta(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }else{
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getGoTo(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                    
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }*/
+                            }
+                    :} SALTO s8 {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                Cuarteto cEt = new Cuarteto("GOTO","","","et"+tablaCuartetos.obtenerUltimo(),2);
+                                tablaCuartetos.agregarCuarteto(cEt);
+                                if(cA.getTipo()==0){
+                                    //Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("ETIQUETA", "et"+cA.getC1().getGoTo(), "", "",3);
+                                    //tablaCuartetos.agregarCuarteto(c);
+                                    tablaCuartetos.agregarCuarteto(cg);
+                                    codigo3D += "et:"+cA.getC1().getGoTo()+":"+"\n";
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }else if(cA.getTipo()==4){
+                                    
+                                }*/
+                            }
+                    :} LOOP;
 
-struc_if ::= IF condicionales {:
-                            //Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
-                            tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET-1),"","",3));
-                            codigo3D += "et"+(contadorET)+":"+"\n";
-                    :} THEN SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 struc_else_if END IF SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
+struc_if ::= IF {:banderaET=contadorET;:} condicionales:a {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                    if(cA.getC1().getTipo()==0){
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getEtiqueta(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }else{
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getGoTo(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                    
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }*/
+                            }
+                    :} THEN SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    //Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("ETIQUETA", "et"+cA.getC1().getGoTo(), "", "",3);
+                                    //tablaCuartetos.agregarCuarteto(c);
+                                    tablaCuartetos.agregarCuarteto(cg);
+                                    codigo3D += "et:"+cA.getC1().getGoTo()+":"+"\n";
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }else if(cA.getTipo()==4){
+                                    
+                                }*/
+                            }
+                    :} struc_else_if END IF SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
 struc_else_if ::=    ELSE SALTO {:comprobadorAmbito.sacarAmbito();ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8  {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
-                    |ELSE_IF {:comprobadorAmbito.sacarAmbito();ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} condicionales THEN SALTO s8 struc_else_if
+                    |ELSE_IF {:comprobadorAmbito.sacarAmbito();ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} condicionales:a {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                    if(cA.getC1().getTipo()==0){
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getEtiqueta(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }else{
+                                        Cuarteto etiqueta = new Cuarteto("ETIQUETA","et"+cA.getC1().getGoTo(),"","",3 );
+                                        tablaCuartetos.agregarCuarteto(c);
+                                        tablaCuartetos.agregarCuarteto(cg);
+                                        tablaCuartetos.agregarCuarteto(etiqueta);
+                                    }
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                    
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaAnd(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }*/
+                            }
+                    :} THEN SALTO s8 {:
+                            if(a!=null){
+                                Condicional cA = (Condicional)a;
+                                if(cA.getTipo()==0){
+                                    //Cuarteto c = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"goto et"+cA.getC1().getEtiqueta() ,1);
+                                    Cuarteto cg = new Cuarteto("ETIQUETA", "et"+cA.getC1().getGoTo(), "", "",3);
+                                    //tablaCuartetos.agregarCuarteto(c);
+                                    tablaCuartetos.agregarCuarteto(cg);
+                                    codigo3D += "et:"+cA.getC1().getGoTo()+":"+"\n";
+                                }else if(cA.getTipo()==1){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }else if(cA.getTipo()==2){
+                                    Cuarteto et2 = new Cuarteto("ETIQUETA", ""+cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et2);
+                                }/*else if(cA.getTipo()==3){
+                                    
+                                }else if(cA.getTipo()==4){
+                                    
+                                }*/
+                            }
+                    :} struc_else_if
                     |;
 
-struc_select ::= SELECT IDENTIFICADOR SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} casos END SELECT SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
-                |SELECT CASE IDENTIFICADOR SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} casos END SELECT SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
+struc_select ::= SELECT IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                tablaCuartetos.apilarSelec((String)a);
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                                
+                :} SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} casos END SELECT SALTO {:
+                comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();
+                            tablaCuartetos.desempilarSelect();
+                :}
+                |SELECT CASE IDENTIFICADOR:a SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} casos END SELECT SALTO {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
 
-casos ::=    CASE operacion s2 SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} s1
-            |CASE operacion TO operacion SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} s1
+casos ::=    CASE s2:a {:
+            :} SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} s1
+            |CASE operacion_switch TO operacion_switch SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} s1
             |CASE ELSE SALTO {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} s8 ;
 
 s1 ::=   casos
         |;
 
-s2 ::=   COMA operacion s2
-        |;
+s2 ::=   s2 COMA operacion_switch
+        |operacion_switch:a {:
+            Condicional condi = new Condicional(new Cuarteto("IF==",a+"",a,1),null, 0 ,"", "");
+        :}; 
 
-condicionales ::=    condicion_xtra:a {::};
+condicionales ::=    condicion_xtra:a {:RESULT = a;:};
 
 condicionales_1 ::=  operacion:a MENOR_QUE operacion:b {: 
                         if(a!=null && b!=null){
@@ -317,37 +650,223 @@ condicionales_1 ::=  operacion:a MENOR_QUE operacion:b {:
                         }
                     :};
 
-condicion_xtra ::=   condicion_xtra:a AND {:
-                            //Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
-                            tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET-1),"","",3));
-                            codigo3D += "et"+(contadorET-1)+":"+"\n";
-                            op = "";
-                    :} condicion_xtra:b {:
+condicion_xtra ::=   condicion_xtra:a AND condicion_xtra:b {:
                         if(a!=null && b!=null){
-                            Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
-                            //tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET-1),"","",3));
-                            //codigo3D += "et"+(contadorET-1)+":"+"\n";
+                            Condicional cA = (Condicional)a;Condicional cB = (Condicional)b;
+                            if(cA.getTipo()==0 && cB.getTipo()==0){
+                                //LISTO
+                                Cuarteto primero = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,cA.getC1().getTipo());
+                                Cuarteto segundo = new Cuarteto(cB.getC1().getOperacion(), cB.getC1().getValor1(), cB.getC1().getValor2(),"et"+cB.getC1().getEtiqueta() ,cB.getC1().getTipo());
+                                tablaCuartetos.and(primero,segundo, cA.getC1().getEtiqueta(), cB.getC1().getEtiqueta(), cA.getC1().getGoTo(),cB.getC1().getGoTo());
+                                String pilaAnd = "";
+                                String pilaOr = "";
+                                if(cA.getC1().getTipo()==0){
+                                    //pilaAnd = "et"+cB.getC1().getEtiqueta()+": ";
+                                    pilaOr = "et"+cA.getC1().getGoTo()+": et";
+                                }else{
+                                    //pilaAnd = "et"+cB.getC1().getEtiqueta()+": ";
+                                    pilaOr = "et"+cA.getC1().getEtiqueta()+": et";
+                                }
+                                
+                                
+                                if(cB.getC1().getTipo()==0){
+                                    pilaAnd = "et"+cB.getC1().getEtiqueta()+": ";
+                                    pilaOr = pilaOr+cB.getC1().getGoTo()+": ";
+                                }else{
+                                    pilaAnd = "et"+cB.getC1().getGoTo()+": ";
+                                    pilaOr = pilaOr+cB.getC1().getEtiqueta()+": ";
+                                }
+                                Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getGoTo()+"",cB.getC1().getGoTo()+"",cB.getC1().getEtiqueta()+"", 0),null,1, pilaAnd, pilaOr);
+                                RESULT = condi;
+                            }else{
+                                if(cA.getTipo()!=0 && cB.getTipo()==0){
+                                    if(cA.getTipo()==1){
+                                        //LISTO
+                                        Cuarteto et3 = new Cuarteto("ETIQUETA", cA.getPilaAnd(), "", "",3);  tablaCuartetos.agregarCuarteto(et3);
+                                        Cuarteto if2 = new Cuarteto(cB.getC1().getOperacion(), cB.getC1().getValor1(), cB.getC1().getValor2(),"et"+cB.getC1().getEtiqueta() ,1); tablaCuartetos.agregarCuarteto(if2);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cB.getC1().getGoTo() ,2); tablaCuartetos.agregarCuarteto(gt2);
+                                        
+                                        String pilaAnd = "";
+                                        String pilaOr = "";
+
+                                        if(cB.getC1().getTipo()==0){
+                                            pilaAnd = "et"+cB.getC1().getEtiqueta()+": ";
+                                            pilaOr = cA.getPilaOr()+"et"+cB.getC1().getGoTo()+": ";
+                                        }else{
+                                            pilaAnd = "et"+cB.getC1().getGoTo()+": ";
+                                            pilaOr = pilaOr+"et"+cB.getC1().getEtiqueta()+": ";
+                                        }
+
+                                        Condicional condi = new Condicional(new Cuarteto("",cB.getC1().getEtiqueta()+"","",cA.getC1().getValor1()+": et"+cA.getC1().getValor2()+": et"+cB.getC1().getGoTo(), 0),null,1,pilaAnd, pilaOr);
+                                        RESULT = condi;
+                                    }
+                                }else if(cA.getTipo()==0 && cB.getTipo()!=0){
+                                    if(cB.getTipo()==1){
+                                        Cuarteto et3 = new Cuarteto("ETIQUETA", "et"+cB.getC1().getValorP(), "", "",3);  tablaCuartetos.agregarCuarteto(et3);
+                                        Cuarteto if2 = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,1); tablaCuartetos.agregarCuarteto(if2);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cB.getC1().getGoTo() ,2); tablaCuartetos.agregarCuarteto(gt2);
+                                        
+                                        
+                                        
+                                        Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getEtiqueta()+"","",cB.getC1().getValor1()+": et"+cB.getC1().getValor2()+": et"+cB.getC1().getGoTo(), 0),null,1,"g","g");
+                                        
+                                        RESULT = condi;
+                                    }
+                                }else{
+                                    if(cA.getTipo()==1 && cB.getTipo()==1){
+                                        /*Cuarteto et3 = new Cuarteto("ETIQUETA", "et"+cB.getC1().getValorP(), "", "",3); 
+                                        Cuarteto if2 = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,1);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cB.getC1().getGoTo() ,2);
+                                        tablaCuartetos.agregarCuarteto(et3);
+                                        tablaCuartetos.agregarCuarteto(if2);
+                                        tablaCuartetos.agregarCuarteto(gt2);
+                                        Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getEtiqueta()+"","",cB.getC1().getValor1()+": et"+cB.getC1().getValor2()+": et"+cB.getC1().getGoTo(), 0),null,1,"f","f");
+                                        RESULT = condi;*/
+                                        
+                                    }
+                                }
+                            }
                             
                         }
                         
                     :} 
-                    |condicion_xtra:a OR {:
-                            //Cuarteto cA = (Cuarteto)a;Cuarteto cB = (Cuarteto)b;
-                            tablaCuartetos.agregarCuarteto(new Cuarteto("ETIQUETA","et"+(contadorET),"","",3));
-                            codigo3D += "et"+(contadorET)+":"+"\n";
-                    :} condicion_xtra:b
+                    |condicion_xtra:a OR condicion_xtra:b {:
+                        if(a!=null && b!=null){
+                            Condicional cA = (Condicional)a;Condicional cB = (Condicional)b;
+                            if(cA.getTipo()==0 && cB.getTipo()==0){
+                                //LISTO
+                                Cuarteto primero = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,cA.getC1().getTipo());
+                                Cuarteto segundo = new Cuarteto(cB.getC1().getOperacion(), cB.getC1().getValor1(), cB.getC1().getValor2(),"et"+cB.getC1().getEtiqueta() ,cB.getC1().getTipo());
+                                tablaCuartetos.or(primero,segundo, cA.getC1().getEtiqueta(), cB.getC1().getEtiqueta(), cA.getC1().getGoTo(),cB.getC1().getGoTo());
+                                    
+                                String pilaAnd = "";
+                                String pilaOr = "";
+                                if(cA.getC1().getTipo()==0){
+                                    pilaAnd = "et"+cA.getC1().getEtiqueta()+": et";
+                                }else{
+                                    pilaAnd = "et"+cA.getC1().getGoTo()+": et";
+                                }
+                                
+                                
+                                if(cB.getC1().getTipo()==0){
+                                    pilaAnd = pilaAnd+cB.getC1().getEtiqueta()+": ";;
+                                    pilaOr = "et"+cB.getC1().getGoTo()+": ";
+                                }else{
+                                    pilaAnd = pilaAnd+cB.getC1().getGoTo()+": ";
+                                    pilaOr = "et"+cB.getC1().getEtiqueta()+": ";
+                                }
+
+                                //String pilaAnd = "et"+cA.getC1().getEtiqueta()+": et"+cB.getC1().getEtiqueta()+": ";
+                                //String pilaOr = "et"+cB.getC1().getGoTo()+": ";
+                                Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getEtiqueta()+"",cB.getC1().getEtiqueta()+"",cB.getC1().getGoTo()+"", 0),new Cuarteto("",cB.getC1().getEtiqueta()+"",cB.getC1().getEtiqueta()+"",cB.getC1().getGoTo()+"", 0),2,pilaAnd,pilaOr);
+                                RESULT = condi;
+                            }else{
+                                if(cA.getTipo()!=0 && cB.getTipo()==0){
+                                    if(cA.getTipo()==1){
+                                        //LISTO
+                                        Cuarteto et1 = new Cuarteto("ETIQUETA", cA.getPilaOr(), "", "",3); 
+                                        //Cuarteto et3 = new Cuarteto("ETIQUETA", "et"+cA.getC1().getValorP(), "", "",3); 
+                                        Cuarteto if2 = new Cuarteto(cB.getC1().getOperacion(), cB.getC1().getValor1(), cB.getC1().getValor2(),"et"+cB.getC1().getEtiqueta() ,1);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cB.getC1().getGoTo() ,2);
+                                        Cuarteto etIf2 = new Cuarteto("ETIQUETA", "et"+cB.getC1().getEtiqueta(), "", "",3);
+                                        tablaCuartetos.agregarCuarteto(et1);
+                                        //tablaCuartetos.agregarCuarteto(et2);
+                                        //tablaCuartetos.agregarCuarteto(et3);
+                                        tablaCuartetos.agregarCuarteto(if2);
+                                        tablaCuartetos.agregarCuarteto(gt2);
+                                        
+                                        String pilaAnd = cA.getPilaAnd()+"et"+cB.getC1().getEtiqueta()+": ";
+                                        String pilaOr = "et"+cB.getC1().getGoTo()+": ";
+                                        
+                                        Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getValor1()+"",cB.getC1().getValor2()+"",cB.getC1().getGoTo()+"", 0),null,2,pilaAnd,pilaOr);
+                                        RESULT = condi;
+                                    }else if(cA.getTipo()==2){
+                                        //LISTO
+                                        Cuarteto et3 = new Cuarteto("ETIQUETA", cA.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et3);
+                                        Cuarteto if2 = new Cuarteto(cB.getC1().getOperacion(), cB.getC1().getValor1(), cB.getC1().getValor2(),"et"+cB.getC1().getEtiqueta() ,1); tablaCuartetos.agregarCuarteto(if2);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cB.getC1().getGoTo() ,2); tablaCuartetos.agregarCuarteto(gt2);
+                                        
+                                        String pilaAnd = cA.getPilaAnd()+"et"+cB.getC1().getEtiqueta()+": ";
+                                        String pilaOr = "et"+cB.getC1().getGoTo()+": ";
+                                        Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getValor1()+": et"+cA.getC1().getValor2()+": et"+cB.getC1().getEtiqueta(),"",cB.getC1().getGoTo()+"", 0),null,2,pilaAnd,pilaOr);
+                                        RESULT = condi;
+                                    }
+                                }else if(cA.getTipo()==0 && cB.getTipo()!=0){
+                                    if(cB.getTipo()==1){
+                                        //Listo
+                                        Cuarteto et3 = new Cuarteto("ETIQUETA", cB.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et3);
+                                        Cuarteto if2 = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,1); tablaCuartetos.agregarCuarteto(if2);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2); tablaCuartetos.agregarCuarteto(gt2);
+                                        
+                                        String pilaAnd = cB.getPilaAnd()+"et"+cA.getC1().getEtiqueta()+": ";
+                                        String pilaOr = "et"+cA.getC1().getGoTo()+": ";
+                                        Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getValor1()+": et"+cA.getC1().getValor2()+": et"+cB.getC1().getEtiqueta(),"",cB.getC1().getGoTo()+"", 0),null,2,pilaAnd,pilaOr);
+                                        RESULT = condi;
+                                    }else if(cB.getTipo()==2){
+                                        Cuarteto et3 = new Cuarteto("ETIQUETA", "et"+cA.getPilaOr(), "", "",3);
+                                        //Cuarteto et3 = new Cuarteto("ETIQUETA", "et"+cB.getC1().getValorP(), "", "",3); 
+                                        Cuarteto if2 = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,1);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                        tablaCuartetos.agregarCuarteto(et3);
+                                        tablaCuartetos.agregarCuarteto(if2);
+                                        tablaCuartetos.agregarCuarteto(gt2);
+                                        Condicional condi = new Condicional(new Cuarteto("",cB.getC1().getValor1()+": et"+cB.getC1().getValor2()+": et"+cA.getC1().getEtiqueta(),"",cA.getC1().getGoTo()+"", 0),null,2, "s","s");
+                                        RESULT = condi;
+                                    }
+                                }else{
+                                    if(cA.getTipo()==1 && cB.getTipo()==2){
+                                        Cuarteto et3 = new Cuarteto("ETIQadfadfadfasdfUETA", "et"+cA.getPilaOr(), "", "",3);
+                                        //Cuarteto et3 = new Cuarteto("ETIQUETA", "et"+cB.getC1().getValorP(), "", "",3); 
+                                        Cuarteto if2 = new Cuarteto(cA.getC1().getOperacion(), cA.getC1().getValor1(), cA.getC1().getValor2(),"et"+cA.getC1().getEtiqueta() ,1);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2);
+                                        tablaCuartetos.agregarCuarteto(et3);
+                                        tablaCuartetos.agregarCuarteto(if2);
+                                        tablaCuartetos.agregarCuarteto(gt2);
+                                    }else if(cA.getTipo()==2 && cB.getTipo()==1){
+                                        //Listo
+                                        /*Cuarteto et3 = new Cuarteto("ETIQUETArrrrrrrrrr", cB.getPilaOr(), "", "",3); tablaCuartetos.agregarCuarteto(et3);
+                                        Cuarteto if2 = new Cuarteto(cB.getC1().getOperacion(), cB.getC1().getValor1(), cB.getC1().getValor2(),"et"+cB.getC1().getEtiqueta() ,1); tablaCuartetos.agregarCuarteto(if2);
+                                        Cuarteto gt2 = new Cuarteto("GOTO", "", "","et"+cA.getC1().getGoTo() ,2); tablaCuartetos.agregarCuarteto(gt2);
+                                        */
+                                        String pilaAnd = cB.getPilaAnd()+"et"+cA.getC1().getEtiqueta()+": ";
+                                        String pilaOr = "et"+cA.getC1().getGoTo()+": ";
+                                        Condicional condi = new Condicional(new Cuarteto("",cA.getC1().getValor1()+": et"+cA.getC1().getValor2()+": et"+cB.getC1().getEtiqueta(),"",cB.getC1().getGoTo()+"", 0),null,2,pilaAnd,pilaOr);
+                                        RESULT = condi;
+                                    }else{
+                                        
+                                    }
+                                }
+                            }
+                            
+                        }
+                        
+                    :} 
                     |PARENTESIS_A condicion_xtra:a PARENTESIS_C
-                    |NOT PARENTESIS_A condicion_xtra:a PARENTESIS_C
+                    |NOT PARENTESIS_A condicionales_1:a PARENTESIS_C {:
+                        
+                        if(a!=null){
+                            Cuarteto c = (Cuarteto)a;
+                            contadorET++;
+                            //contadorET++;
+                            Cuarteto cEt = new Cuarteto(c.getOperacion(),c.getValor1(),c.getValor2(),c.getValorP(),10);
+                            cEt.setEtiqueta(contadorET);
+                            contadorET++;
+                            cEt.setGoTo(contadorET);
+                            Condicional condi = new Condicional(cEt,null,0,"","");
+                            RESULT = condi;
+                        }
+                        
+                    :}
                     |condicionales_1:a {:
                         if(a!=null){
                             Cuarteto c = (Cuarteto)a;
                             contadorET++;
-                            codigo3D += "if "+c.getValor1()+c.getValorP()+c.getValor2()+" goto et"+contadorET+"\n";
-                            tablaCuartetos.agregarCuarteto(new Cuarteto(c.getOperacion(),c.getValor1(),c.getValor2()," goto et"+contadorET,1));
+                            Cuarteto cEt = new Cuarteto(c.getOperacion(),c.getValor1(),c.getValor2(),c.getValorP(),0);
+                            cEt.setEtiqueta(contadorET);
                             contadorET++;
-                            codigo3D += "goto et"+contadorET+"\n";
-                            tablaCuartetos.agregarCuarteto(new Cuarteto("GOTO","",""," goto et"+contadorET,2));
-                            RESULT = new Cuarteto("GOTO",(contadorET-1)+"",contadorET+"","",0);
+                            cEt.setGoTo(contadorET);
+                            Condicional condi = new Condicional(cEt,null,0,"","");
+                            RESULT = condi;
                         }
                     :};
 
@@ -473,6 +992,124 @@ operacion ::=    operacion:a MAS operacion:b {:
                 |DECIMAL:a {:RESULT = new Nodo((float)a+"",(float)a);:}
                 |VALOR:a {:RESULT = new Nodo((String)a,(String)a);:};
 
+operacion_switch ::= operacion_switch:a MAS operacion_switch:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
+                                    int resultado = (int) ((int)nodeA.getValor()+(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SUMA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,4));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())+(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }
+                            }else{
+                                contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
+                                    //RESULT = new Nodo("t"+contadorEVT,resultado);
+                                String texto = nodeA.getValor() +""+ nodeB.getValor(); RESULT = new Nodo(texto,texto);
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_switch:a AND_RESRV operacion_switch:b {: 
+                        if(a!=null && b!=null){
+                            contadorEVT++;
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                            
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
+                            String texto = nodeA.getValor() +""+nodeB.getValor(); RESULT = new Nodo(texto,texto);
+                        }else{RESULT = null;}
+                :}
+                |operacion_switch:a MENOS:c operacion_switch:b {:
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
+                                    int resultado = (int) ((int)nodeA.getValor()-(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" - "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("RESTA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,5));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())-(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" - "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("RESTA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,5));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);}
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_switch:a POR:c operacion_switch:b {:
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(!(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor()))){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())*(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" * "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("POR",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,6));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{int resultado = (int) ((int)nodeA.getValor()*(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" * "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("POR",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,6));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);}
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_switch:a DIV:c operacion_switch:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                contadorEVT++;
+                                codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" / "+nodeB.getText()+"\n";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("DIV",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,7));
+                                if(comprobadorTipos.isFloat(nodeA.getValor()) || comprobadorTipos.isFloat(nodeB.getValor())){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())/(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)nodeA.getValor()/(int)nodeB.getValor()); RESULT = new Nodo("t"+contadorEVT,resultado);}
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_switch:a DIV_ENTERO:c operacion_switch:b {:
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                contadorEVT++;
+                                codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" / "+nodeB.getText()+"\n";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("DIV",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,7));
+                                int resultado = (int) ((float)nodeA.getValor()/(float)nodeB.getValor());
+                                RESULT = new Nodo("t"+contadorEVT,resultado);
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_switch:a POT operacion_switch:b {:RESULT = new Nodo((float)a+"",(float)a);:}
+                |PARENTESIS_A operacion_switch:a PARENTESIS_C {:RESULT = a;:}
+                |CORCHETE_A operacion_switch:a CORCHETE_C {:RESULT = a;:}
+                |LLAVES_A operacion_switch:a LLAVES_C {:RESULT = a;:}
+                |NUMERO:a {:RESULT = new Nodo((Integer)a+"",(Integer)a);:}
+                |DECIMAL:a {:RESULT = new Nodo((float)a+"",(float)a);:}
+                |VALOR:a {:RESULT = new Nodo((String)a,(String)a);:};
+
+
 
 sentencias_1 ::=   mensajes SALTO
                 |bloque_declararion_var SALTO
@@ -480,7 +1117,8 @@ sentencias_1 ::=   mensajes SALTO
                 |struc_if
                 |struc_select
                 |COMENTARIO
-                |SALTO;
+                |SALTO
+                |error:e {:parser.syntax_error((Symbol)e); :} sentencias_1;
 
 sentencias ::=   sentencias mensajes
                 |sentencias bloque_declararion_var SALTO
@@ -489,7 +1127,8 @@ sentencias ::=   sentencias mensajes
                 |sentencias struc_select
                 |sentencias COMENTARIO
                 |sentencias SALTO
-                |;
+                |
+                |sentencias error:e {:parser.syntax_error((Symbol)e); :};
 
 mensajes ::= MSG operacion PARENTESIS_C SALTO
             |CONSOLE_WRT operacion PARENTESIS_C SALTO

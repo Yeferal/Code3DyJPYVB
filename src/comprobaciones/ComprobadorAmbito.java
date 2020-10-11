@@ -28,7 +28,7 @@ public class ComprobadorAmbito {
     
     /*busca que no existe una variable en el mismo ambito o que pertenezca al conjunto de ambitos*/
     public boolean verificarVariable(ArrayList<Simbolo> listaSimbolos, Simbolo s){
-        System.out.println("-----------------------------"+ambitosCamino+"--entre--: "+s.getNombre()+"---ambito: "+s.getAmbito());
+        //System.out.println("-----------------------------"+ambitosCamino+"--entre--: "+s.getNombre()+"---ambito: "+s.getAmbito());
         for (int i = 0; i < listaSimbolos.size(); i++) {
             //si el simbolo es del mismo nombre
             if(listaSimbolos.get(i).getNombre().equalsIgnoreCase(s.getNombre())){
@@ -67,7 +67,7 @@ public class ComprobadorAmbito {
         }*/
         sacarAmbito();
         sumarAmbito(1);
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>AmbitoLista : "+ambitosCamino);
+        //System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>AmbitoLista : "+ambitosCamino);
         //return contadorAmbito;
     }
     

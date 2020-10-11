@@ -24,11 +24,13 @@ public class Main {
 
     
     public static void main(String[] args) {
-        VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
-        ventanaPrincipal.setVisible(true);
+        //VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
+        //ventanaPrincipal.setVisible(true);
         Archivo ar = new Archivo();
 //        String texto = "while";
-        String texto = ar.leerArchivo("src/prueba2.mlg");
+//        String texto = ar.leerArchivo("src/prueba2.mlg");
+        String texto = ar.leerArchivo("src/prueba3.mlg");
+        //String texto = ar.leerArchivo("src/pruebaErrores.mlg");
         
         //System.out.println(texto);
         
@@ -53,31 +55,34 @@ public class Main {
         AnalizadorSintacticoIm analizadorSintacticoIm = new AnalizadorSintacticoIm(analizadorLexicoIm);
         try {
             analizadorSintacticoVB.parse();
-//            analizadorSintacticoJAVA.parse();
-//            analizadorSintacticoPY.parse();
-//            analizadorSintacticoCPP.parse();
+            //analizadorSintacticoJAVA.parse();
+            //analizadorSintacticoPY.parse();
+            //analizadorSintacticoCPP.parse();
             
             //analizadorSintacticoIm.parse();
             
             System.out.println("\n==>TERMINO<==\n\n");
-            System.out.println("Tabla Simbolos VB");
-            analizadorSintacticoVB.tablaSimbolos.pintar();
-            System.out.println("\nTabla Simbolos JAVA");
+            //System.out.println("Tabla Simbolos VB");
+            //analizadorSintacticoVB.tablaSimbolos.pintar();
+            /*System.out.println("\nTabla Simbolos JAVA");
             analizadorSintacticoJAVA.tablaSimbolos.pintar();
             System.out.println("\nTabla Simbolos PY");
             analizadorSintacticoPY.tablaSimbolos.pintar();
             System.out.println("\nTabla Simbolos CPP");
-            analizadorSintacticoCPP.tablaSimbolos.pintar();
+            analizadorSintacticoCPP.tablaSimbolos.pintar();*/
         } catch (Exception ex) {
             //ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         System.out.println("\nErrores VB");
+        for (int i = 0; i < analizadorSintacticoVB.erroresSintactico.size(); i++) {
+            System.out.println(analizadorSintacticoVB.erroresSintactico.get(i).toString());
+        }
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
-        }/*
-        System.out.println("\nErrores JAVA");
+        }
+        /*System.out.println("\nErrores JAVA");
         for (int i = 0; i < analizadorSintacticoJAVA.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoJAVA.erroresSemanticos.get(i).toString());
         }
@@ -90,6 +95,8 @@ public class Main {
             System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());
         }*/
         System.out.println("");
+        //String h = "'c'";
+        //System.out.println("SUB: "+h.substring(1, 2));
         
         System.out.println("\nCuartetos VB");
         analizadorSintacticoVB.tablaCuartetos.pintar();

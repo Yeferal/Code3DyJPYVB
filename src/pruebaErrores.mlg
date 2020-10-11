@@ -3,80 +3,72 @@
 public sub hola()
     Dim N as integer
     Dim c as integer
-    Dim f as Decimal
+    Dim f as float
     Dim Fact, Factorial, Num As Integer
     N = 10
-    //hola
-    /*dad*/
-    Num = N
+    Num = N 
     f = 5/(1+1)
-    do
-        n = 50
-    Loop While N > 1
-    If N = 0  Then
+    If N = 0 and 5< 5+5 or 5=5 Then
     	Dim hola as integer
         Factorial = 1
-    ELSEIF N < 0 THEN
+    ELSEIF N < 0 ThEN
 	dim hola as integer
-        hola = 5
     ELSEIF N > 0 THEN
-    	dim hola as integer
-        hola = 4
+    	dim hola as integer    	
     Else
         Dim como as integer
         como = 5
         Fact = 1
         While N > 1
-            //Dim fact as integer
+            'Dim fact as integer
             Fact = como * N
             N = N - 1
-       	End While
+       	wENd
 	Factorial = Fact
 	Select CASE como
             CASE 8
-		//Dim como as integer
+		'Dim como as integer
             CASE 9
-		//dim como as integer
-            CASE else
-		//dim como as integer
+		'dim como as integer
+            CAsE else
+		'dim como as integer
 	END select
     End If
     FOR c = 8 To 15
     	dim character as char
     	if Num < 0 THEN 
             dim como as integer
-            como = 5+5
         end if
     next c
 End sub
 
 Function Factorial(N As Integer) as integer
-    Dim Fact, Num As Integer
+    Dim Fact,Factorial, Num As Integer
     N = 5
     Num = N
     If N = 0 Then
-	//Factorial = 1
+	Factorial = 1
     Else
         Fact = 1
         Do
-            //Fact = Fact * N _
+            'Fact = Fact * N _
             N = N - 1
-                //Dim Fact, Num As Integer
+                'Dim Fact, Num As Integer
     		Num = N
     		If N = 0 Then
-                    //Factorial = 1
+                    Factorial = 1
     		Else
                     Fact = 1
                     Do
                         Fact = Fact * N
             		N = N - 1
                     Loop While N > 1
-                    //Factorial = Fact
+                    Factorial = Fact
     		End If
 	Loop While N > 1
-	//Factorial = Fact
+	Factorial = Fact
     End If
-    Return 0
+    RetUrn 0
 End Function
 
 %%JAVA
@@ -86,17 +78,17 @@ public class algo{
             System.out.println("asasasd");
             int entero = 10;
             int a,b=5,s;
-            //char cx,ch = 'd';
-            float ff = 22.5;
+            char cx,ch = 'd';
+            //float ff = 22.5;
             //int entero = 10;
-            //char ch = 'd';
+            char ch = 'd';
             
-            int z = 20;
+            z = 20;
             if ((b+5)==5 && ff<50) {
                 while (entero<20) {                
                     entero = entero +3;
                 }
-                //float ff = 22.5;
+                float ff = 22.5;
             }else{
                 for (int i = 0; i < 5; i++) {
                     System.out.println("Hola: "+entero);
@@ -126,17 +118,15 @@ public class algo{
 
         public int holaMundo3(int a) {
 		System.out.println("asasasd");
-		int id = 5, dos = 2;
-                if (5<6) {
-			//a = b;
+		if (5<6) {
+			a = b;
 			for(int i = 0; i < 6; i++) {
 				int a = a;
                                 return 0;
 			}
                         return 0;
 		} else if (6 == 6) {
-			//int a;
-                        
+			int a;
 			while (id > 0) {
 				System.out.println("Hola " + id);
 				do {
@@ -175,10 +165,6 @@ def edadmeses(edad, meses):
     meses = edad * 12
     print("meses = ",meses)
     #intinput("")
-    """for i = 0 in range():
-    range(1)
-    range(1,2)
-    range(1,2,1)"""
     for i in [1,2,"h"]:
         hola = 'c'
         if 5<6:
@@ -217,7 +203,7 @@ const int constante1 = 10;
 // Variables globales
 int Arreglo1[1][4];
 
-void main()
+int main()
 {
     int base, exp, i, resultado;
 
@@ -255,5 +241,6 @@ void main()
     printf(" = %d",resultado);
 
     getch();
-    //return 0;
+    return 0;
 }
+

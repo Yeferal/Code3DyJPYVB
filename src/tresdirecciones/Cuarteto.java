@@ -4,7 +4,7 @@ package tresdirecciones;
 public class Cuarteto {
     
     private String operacion, valor1, valor2, valorP;
-    private int tipo;
+    private int tipo, goTo, etiqueta;
 
     public Cuarteto(String operacion, String valor1, String valor2, String valorP, int tipo) {
         this.operacion = operacion;
@@ -53,9 +53,27 @@ public class Cuarteto {
     public void setTipo(int tipo) {
         this.tipo = tipo;
     }
+
+    public int getGoTo() {
+        return goTo;
+    }
+
+    public void setGoTo(int goTo) {
+        this.goTo = goTo;
+    }
+
+    public int getEtiqueta() {
+        return etiqueta;
+    }
+
+    public void setEtiqueta(int etiqueta) {
+        this.etiqueta = etiqueta;
+    }
+    
     
     public String toString(){
         return ".\t"+getOperacion()+"\t\t"+getValor1()+"\t\t"+getValor2()+"\t"+getValorP();
     }
+    
     
 }

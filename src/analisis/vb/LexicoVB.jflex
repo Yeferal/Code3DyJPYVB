@@ -79,6 +79,8 @@ Siguiente       = (" _\n")+
     
     //Comentario
     ("'"(({LqSea}|.)* (" _\n" | "\b_\n")? )* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
+    ("//"({LqSea}|.)* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
+    ("/*"({LqSea}|.|"\n")* "*/")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
     
     //Mensaje Pantalla
     "MsgBox("                                   {pintar("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
@@ -105,7 +107,7 @@ Siguiente       = (" _\n")+
     "Continue"                                  {pintar(yytext()); return new Symbol(SimbolosVB.CONTINUE , yycolumn, yyline, yytext());}
     "Exit"                                      {pintar(yytext()); return new Symbol(SimbolosVB.EXIT , yycolumn, yyline, yytext());}
     "Loop"                                      {pintar(yytext()); return new Symbol(SimbolosVB.LOOP , yycolumn, yyline, yytext());}
-    "Wend"                                      {pintar(yytext()); return new Symbol(SimbolosVB.WEND , yycolumn, yyline, yytext());}
+    ("Wend"|"End While")                                      {pintar(yytext()); return new Symbol(SimbolosVB.WEND , yycolumn, yyline, yytext());}
     
     //Condiciones
         //IF-ELSE

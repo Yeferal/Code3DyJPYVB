@@ -1,2 +1,0 @@
-analisis.java.AnalizadorSintacticoJAVA
-analisis.java.CUP$AnalizadorSintacticoJAVA$actions
