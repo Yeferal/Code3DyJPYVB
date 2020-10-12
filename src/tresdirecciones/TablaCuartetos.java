@@ -15,6 +15,7 @@ public class TablaCuartetos {
     7. DIV
     8. PRINT
     9. CONCAT
+    10.VAR
     */
     
     
@@ -67,6 +68,14 @@ public class TablaCuartetos {
             nombre = pilaSelec.peek();
         }
         return nombre;
+    }
+    
+    public int getUltimo(){
+        int val =0;
+        if(!pila.isEmpty()){
+            val = (int) pila.peek();
+        }
+        return val; 
     }
     
     public int obtenerUltimo(){

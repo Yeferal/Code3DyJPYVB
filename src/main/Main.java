@@ -31,7 +31,7 @@ public class Main {
 //        String texto = ar.leerArchivo("src/prueba2.mlg");
         String texto = ar.leerArchivo("src/prueba3.mlg");
         //String texto = ar.leerArchivo("src/pruebaErrores.mlg");
-        
+        System.out.println("\"");
         //System.out.println(texto);
         
         
@@ -54,9 +54,9 @@ public class Main {
         AnalizadorLexicoIm analizadorLexicoIm = new AnalizadorLexicoIm(new StringReader("\"JAVA.*\""));
         AnalizadorSintacticoIm analizadorSintacticoIm = new AnalizadorSintacticoIm(analizadorLexicoIm);
         try {
-            analizadorSintacticoVB.parse();
+            //analizadorSintacticoVB.parse();
             //analizadorSintacticoJAVA.parse();
-            //analizadorSintacticoPY.parse();
+            analizadorSintacticoPY.parse();
             //analizadorSintacticoCPP.parse();
             
             //analizadorSintacticoIm.parse();
@@ -75,21 +75,24 @@ public class Main {
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        System.out.println("\nErrores VB");
+        /*System.out.println("\nErrores VB");
         for (int i = 0; i < analizadorSintacticoVB.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSintactico.get(i).toString());
         }
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
-        }
+        }*/
         /*System.out.println("\nErrores JAVA");
         for (int i = 0; i < analizadorSintacticoJAVA.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoJAVA.erroresSemanticos.get(i).toString());
-        }
+        }*/
         System.out.println("\nErrores PY");
+        for (int i = 0; i < analizadorSintacticoVB.erroresSintactico.size(); i++) {
+            System.out.println(analizadorSintacticoVB.erroresSintactico.get(i).toString());
+        }
         for (int i = 0; i < analizadorSintacticoPY.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoPY.erroresSemanticos.get(i).toString());
-        }
+        }/*
         System.out.println("\nErrores PROGRAMA PRINCIPAL");
         for (int i = 0; i < analizadorSintacticoCPP.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());

@@ -26,11 +26,12 @@ import java.util.ArrayList;
 
     //expreciones regulares
 
-Signo           = [-_.!@#%&*|/]
+Signo           = [-_.!@#$%&*()+=]
 Letra           = ([a-zA-Z] | ñ | Ñ)
 Digito          = [0-9]
 Numero          = {Digito} {Digito}*
 LqSea           =  ({Signo}|{Letra}|{Numero})*
+Cadena          = ("\"" [^\"]* "\"" )
 Espacio         = [ \t\r]+
 Siguiente       = (" _\n")+
 %%
@@ -78,7 +79,7 @@ Siguiente       = (" _\n")+
     "Like"                                      {pintar(yytext()); return new Symbol(SimbolosVB.LIKE , yycolumn, yyline, yytext());}
     
     //Comentario
-    ("'"(({LqSea}|.)* (" _\n" | "\b_\n")? )* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
+    //("'"(({LqSea}|.)* (" _\n" | "\b_\n")? )* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
     ("//"({LqSea}|.)* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
     ("/*"({LqSea}|.|"\n")* "*/")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosVB.COMENTARIO , yycolumn, yyline, yytext());}
     
@@ -137,8 +138,8 @@ Siguiente       = (" _\n")+
 
     ({Numero}"."{Numero})                 {pintar("DECIMAL: "+yytext()); return new Symbol(SimbolosVB.DECIMAL , yycolumn, yyline, new Float(yytext()));}
     ({Numero})                            {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosVB.NUMERO , yycolumn, yyline, new Integer(yytext()));}
-    ("'"({LqSea}|.)*"'")                        {pintar(yytext()); return new Symbol(SimbolosVB.VALOR , yycolumn, yyline, yytext());}
-    ("\""({LqSea}|.)*"\"")                      {pintar(yytext()); return new Symbol(SimbolosVB.VALOR , yycolumn, yyline, yytext());}
+    ("'"[^\"]"'")                        {pintar(yytext()); return new Symbol(SimbolosVB.VALOR , yycolumn, yyline, yytext());}
+    {Cadena}                     {pintar("Print: "+yytext()); return new Symbol(SimbolosVB.VALOR , yycolumn, yyline, yytext());}
     
     
     {Siguiente}                                 {/*Ignore*/}

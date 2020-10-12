@@ -147,13 +147,18 @@ public class ComprobadorTipos {
         return objeto;
     }
     
-    
-    
-    
-    
-    
-    
-    
+    public String convertirTipoTexto(String tipo){
+        String tipoC = "";
+        switch(tipo){
+            case "Integer":
+                return "int";
+            case "Char":
+                return "char";
+            case "Float":
+                return "float";
+        }
+        return tipoC;
+    }
     
     
     

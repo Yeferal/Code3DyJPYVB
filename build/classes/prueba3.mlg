@@ -8,12 +8,22 @@ public sub hola()
     N = 10
     Num = N
     f = 5/(1+1)
-    select n 
-        case 1,3,4
-            FACTORIAL = 5
+    FACTORIAL = 5
+        MsgBox("Hola: " + (FACTORIAL-1)*5+ "l")
 
-    END select
 
+    /*
+    while n < 5 
+        FACTORIAL = 2
+        while n > 3
+            If N = 0 Then
+                Dim hola as integer
+                Factorial = 1
+            End If
+        End While
+    End While
+    
+*/
     /*If N = 0 and N<4 and n<5 and n=5 Then
     	Dim hola as integer
         Factorial = 1
@@ -118,15 +128,17 @@ public class algo{
 
 def edadmeses(edad, meses):
     edad = 5
-    intinput("Ingrese su edad:")
     meses = edad * 12
-    print("meses = ",meses)
+    n = 0
+    //intinput("Ingrese su edad:")
+    
+    //print("meses = ",meses)
     #intinput("")
     """for i = 0 in range():
     range(1)
     range(1,2)
     range(1,2,1)"""
-    for i in [1,2,"h"]:
+    /*for i in [1,2,"h"]:
         hola = 'c'
         if 5<6:
             g = 1
@@ -137,7 +149,7 @@ def edadmeses(edad, meses):
             while h<10:
                 h= h+3
                 return 10
-    hola = 2
+    hola = 2*/
     return 10
 
 def saludo():

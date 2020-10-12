@@ -31,6 +31,7 @@ Letra           = ([a-zA-Z] | ñ | Ñ)
 Digito          = [0-9]
 Numero          = {Digito} {Digito}*
 LqSea           =  ({Signo}|{Letra}|{Numero})*
+Cadena          = ("\"" [^\"]* "\"" )
 Espacio         = [ \r]
 %%
 
@@ -67,6 +68,8 @@ Espacio         = [ \r]
     //Comentario
     ("#"({LqSea}|.)* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosPY.COMENTARIO_SIMPLE , yycolumn, yyline, yytext());}
     ("\"\"\""({LqSea}|.|"\n")* "\"\"\"")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosPY.COMENTARIO_VARIOS , yycolumn, yyline, yytext());}
+    ("//"({LqSea}|.)* "\n")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosPY.COMENTARIO_SIMPLE , yycolumn, yyline, yytext());}
+    ("/*"({LqSea}|.|"\n")* "*/")                     {pintar("Comentario: "+yytext()); return new Symbol(SimbolosPY.COMENTARIO_VARIOS , yycolumn, yyline, yytext());}
 
 
     //Mensaje Pantalla
@@ -104,8 +107,8 @@ Espacio         = [ \r]
     
     ({Numero}"."{Numero})                       {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosPY.NUMERO , yycolumn, yyline, new Float(yytext()));}
     ({Numero})                                  {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosPY.NUMERO , yycolumn, yyline, new Integer(yytext()));}
-    ("'"({LqSea}|.)"'")                        {pintar(yytext()); return new Symbol(SimbolosPY.VALOR , yycolumn, yyline, yytext());}
-    ("\""({LqSea}|.)*"\"")                      {pintar(yytext()); return new Symbol(SimbolosPY.TEXTO , yycolumn, yyline, yytext());}
+    ("'"[^\"]"'")                        {pintar(yytext()); return new Symbol(SimbolosPY.VALOR , yycolumn, yyline, yytext());}
+    {Cadena}                      {pintar(yytext()); return new Symbol(SimbolosPY.TEXTO , yycolumn, yyline, yytext());}
     
     
     //{Siguiente}                                   {/*Ignore*/}

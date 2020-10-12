@@ -2,10 +2,12 @@
 package analisis.py;
 import comprobaciones.ComprobadorAmbito;
 import comprobaciones.ComprobadorTipos;
+import comprobaciones.Nodo;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import simbolos.Simbolo;
 import simbolos.TablaSimbolos;
+import tresdirecciones.*;
 import errores.ErrorG;
 
 //Codigo para el parser, variables, metodos
@@ -13,6 +15,8 @@ parser code
 {:
     public TablaSimbolos tablaSimbolos = new TablaSimbolos();
     public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    public ArrayList<ErrorG> erroresSintactico = new ArrayList<>();
+    public TablaCuartetos tablaCuartetos = new TablaCuartetos();
     
     private Symbol s;
     public void syntaxError(Symbol s){
@@ -45,10 +49,18 @@ action code
     ComprobadorTipos comprobadorTipos = new ComprobadorTipos();
     ComprobadorAmbito comprobadorAmbito = new ComprobadorAmbito();
     ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    TablaCuartetos tablaCuartetos = new TablaCuartetos();
     int ambitoFlag = 0;
     int ambitoContador = 0;
     int ambitoActual = 0;
+    int contadorEVT = 0;
+    int banderaEVT = 0;
+    int contadorET = 0;
+    int banderaET = 0;
+    int flagET = 0;
+    String op = "";
     String tipoV = "";
+    String codigo3D = "";
     ArrayList<Integer> ambitos = new ArrayList<>();
     TablaSimbolos tablaSimbolos = new TablaSimbolos();
 
@@ -86,7 +98,11 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_PY {:actualizarAmbitos();:} codigo_inicio SEPARADOR_PROGRAMA {:parser.tablaSimbolos = tablaSimbolos; parser.erroresSemanticos = erroresSemanticos;:};
+INICIO ::=   SEPARADOR_PY {:actualizarAmbitos();:} codigo_inicio SEPARADOR_PROGRAMA {:
+                            parser.tablaSimbolos = tablaSimbolos; 
+                            parser.erroresSemanticos = erroresSemanticos; 
+                            parser.tablaCuartetos = tablaCuartetos; 
+:};
 
 declaracion_var ::= IDENTIFICADOR:a {:
                     if(ambitoContador==0){
@@ -143,7 +159,8 @@ codigo ::=   funcion codigo_inicio
             |mensajes codigo_inicio
             |retunr_v codigo_inicio
             |solicitud SALTO codigo_inicio
-            |SALTO codigo_inicio;
+            |SALTO codigo_inicio
+            |error:e {:parser.syntax_error((Symbol)e); :} codigo_inicio;
 
 retunr_v ::= RETURN valor SALTO;
 
