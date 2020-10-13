@@ -126,37 +126,45 @@ public class algo{
 }
 %%PY
 
-def edadmeses(edad, meses):
+def edadmeses(edad, mesess):
     edad = 5
     meses = edad * 12
-    n = 0
+    //n = 0
+    n = 5
     //intinput("Ingrese su edad:")
     
-    //print("meses = ",meses)
+    //print("mes1s = ",meses)
+    if n<5 and n>1 :
+        edad = 6
+    while n==0:
+    for i in range(1,2):
+        edad = 2
+    edad = 2
+
     #intinput("")
     """for i = 0 in range():
     range(1)
     range(1,2)
     range(1,2,1)"""
-    /*for i in [1,2,"h"]:
+    for i in range(1,5,5):
         hola = 'c'
         if 5<6:
             g = 1
         elif 10<1:
             g = 2
-        else
+        else:
             h = 1
             while h<10:
                 h= h+3
                 return 10
-    hola = 2*/
+    hola = 2
     return 10
 
 def saludo():
-    edad = intinput("Ingrese su edad:")
-    meses = edad * 12
-    print("meses = ",meses)
-    intinput("")
+    //edad = intinput("Ingrese su edad:")
+    //meses = edad * 12
+    //print("meses = ",meses)
+    //intinput("")
     hola = 2
     j = 5
 

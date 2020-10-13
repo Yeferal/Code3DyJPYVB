@@ -33,6 +33,14 @@ public class TablaCuartetos {
         }
         
     }
+
+    public ArrayList<Cuarteto> getListaCuartetos() {
+        return listaCuartetos;
+    }
+
+    public void setListaCuartetos(ArrayList<Cuarteto> listaCuartetos) {
+        this.listaCuartetos = listaCuartetos;
+    }
     
     public void pintar(){
         System.out.println("No.\tOperacion\tVAL_1\t\tVAL_2\tValor");

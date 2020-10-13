@@ -13,7 +13,7 @@ public class ErrorG {
     
     /*Tipo de error
     1. Lexico
-    2. Sintactico
+    2. Sintactico   
     3. Semantico
     */
     

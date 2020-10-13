@@ -3,6 +3,7 @@ package analisis.vb;
 import comprobaciones.ComprobadorAmbito;
 import comprobaciones.ComprobadorTipos;
 import comprobaciones.Nodo;
+import comprobaciones.NodoPY;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
 import simbolos.Simbolo;
@@ -161,17 +162,21 @@ bloque_declararion_var ::=   DIM IDENTIFICADOR:b tipo_declaracion:a {:Simbolo au
                                 }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                             }
                         :}
-                            |IDENTIFICADOR:a IGUAL s4:b  {:Nodo nodeB = (Nodo)b;
-                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
-                                Simbolo s = tablaSimbolos.getSimbolo();
-                                //System.out.println("Valor-=======================================-=---------------"+b);
-                                if(comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
-                                    tablaSimbolos.setSimbolo(nodeB.getValor());
-                                    codigo3D += tabs()+(String)a+" := "+nodeB.getText()+"\n";
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeB.getText(),"",(String)a,0));
-                                }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
-                                
-                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
+                            |IDENTIFICADOR:a IGUAL s4:b  {:
+                            if(b!=null){
+                                Nodo nodeB = (Nodo)b;
+                                if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                    
+                                    Simbolo s = tablaSimbolos.getSimbolo();
+                                    //System.out.println("Valor-=======================================-=---------------"+b);
+                                    if(comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
+                                        tablaSimbolos.setSimbolo(nodeB.getValor());
+                                        codigo3D += tabs()+(String)a+" := "+nodeB.getText()+"\n";
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeB.getText(),"",(String)a,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+
+                                }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
+                            }
                         :};
 
 s4 ::=   operacion:a {:RESULT = a;:}

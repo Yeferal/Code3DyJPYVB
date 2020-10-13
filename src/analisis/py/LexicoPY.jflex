@@ -84,6 +84,7 @@ Espacio         = [ \r]
     //Ciclos
         //for
     "for"                                       {pintar("for"); return new Symbol(SimbolosPY.FOR , yycolumn, yyline, yytext());}
+    "range("                                       {pintar("range("); return new Symbol(SimbolosPY.RANGE , yycolumn, yyline, yytext());}
     "in"                                       {pintar("in"); return new Symbol(SimbolosPY.IN , yycolumn, yyline, yytext());}
     "_"                                       {pintar("_"); return new Symbol(SimbolosPY.GUION_BAJO , yycolumn, yyline, yytext());}
         //while
@@ -105,7 +106,7 @@ Espacio         = [ \r]
     //"Public"                                    {pintar(yytext()); return new Symbol(SimbolosPY.PUBLIC , yycolumn, yyline, yytext());}
     ({Letra})("_"| {Letra}| {Numero})*          {pintar("id: "+yytext()); return new Symbol(SimbolosPY.IDENTIFICADOR , yycolumn, yyline, yytext());}
     
-    ({Numero}"."{Numero})                       {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosPY.NUMERO , yycolumn, yyline, new Float(yytext()));}
+    ({Numero}"."{Numero})                       {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosPY.DECIMAL , yycolumn, yyline, new Float(yytext()));}
     ({Numero})                                  {pintar("NUMERO: "+yytext()); return new Symbol(SimbolosPY.NUMERO , yycolumn, yyline, new Integer(yytext()));}
     ("'"[^\"]"'")                        {pintar(yytext()); return new Symbol(SimbolosPY.VALOR , yycolumn, yyline, yytext());}
     {Cadena}                      {pintar(yytext()); return new Symbol(SimbolosPY.TEXTO , yycolumn, yyline, yytext());}

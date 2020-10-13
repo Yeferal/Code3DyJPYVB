@@ -65,10 +65,10 @@ public class Main {
             //System.out.println("Tabla Simbolos VB");
             //analizadorSintacticoVB.tablaSimbolos.pintar();
             /*System.out.println("\nTabla Simbolos JAVA");
-            analizadorSintacticoJAVA.tablaSimbolos.pintar();
+            analizadorSintacticoJAVA.tablaSimbolos.pintar();*/
             System.out.println("\nTabla Simbolos PY");
             analizadorSintacticoPY.tablaSimbolos.pintar();
-            System.out.println("\nTabla Simbolos CPP");
+            /*System.out.println("\nTabla Simbolos CPP");
             analizadorSintacticoCPP.tablaSimbolos.pintar();*/
         } catch (Exception ex) {
             //ex.printStackTrace();
@@ -87,8 +87,8 @@ public class Main {
             System.out.println(analizadorSintacticoJAVA.erroresSemanticos.get(i).toString());
         }*/
         System.out.println("\nErrores PY");
-        for (int i = 0; i < analizadorSintacticoVB.erroresSintactico.size(); i++) {
-            System.out.println(analizadorSintacticoVB.erroresSintactico.get(i).toString());
+        for (int i = 0; i < analizadorSintacticoPY.erroresSintactico.size(); i++) {
+            System.out.println(analizadorSintacticoPY.erroresSintactico.get(i).toString());
         }
         for (int i = 0; i < analizadorSintacticoPY.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoPY.erroresSemanticos.get(i).toString());
@@ -101,8 +101,10 @@ public class Main {
         //String h = "'c'";
         //System.out.println("SUB: "+h.substring(1, 2));
         
-        System.out.println("\nCuartetos VB");
-        analizadorSintacticoVB.tablaCuartetos.pintar();
+        //System.out.println("\nCuartetos VB");
+        //analizadorSintacticoVB.tablaCuartetos.pintar();
+        System.out.println("\nCuartetos PY");
+        analizadorSintacticoPY.tablaCuartetos.pintar();
         
         //System.out.println(codigo3D);
         ComprobadorTipos c = new ComprobadorTipos();
