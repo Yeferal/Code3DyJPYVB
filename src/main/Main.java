@@ -82,7 +82,7 @@ public class Main {
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
         }
-        System.out.println("\nErrores JAVA");
+        /*System.out.println("\nErrores JAVA");
         for (int i = 0; i < analizadorSintacticoJAVA.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoJAVA.erroresSintactico.get(i).toString());
         }
@@ -102,19 +102,19 @@ public class Main {
         }
         for (int i = 0; i < analizadorSintacticoCPP.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());
-        }
+        }*/
         System.out.println("");
         //String h = "'c'";
         //System.out.println("SUB: "+h.substring(1, 2));
         
         System.out.println("\nCuartetos VB");
         analizadorSintacticoVB.tablaCuartetos.pintar();
-        System.out.println("\nCuartetos PY");
-        analizadorSintacticoPY.tablaCuartetos.pintar();
         System.out.println("\nCuartetos JAVA");
         analizadorSintacticoJAVA.tablaCuartetos.pintar();
+        /*System.out.println("\nCuartetos PY");
+        analizadorSintacticoPY.tablaCuartetos.pintar();
         System.out.println("\nCuartetos CPP");
-        analizadorSintacticoCPP.tablaCuartetos.pintar();
+        analizadorSintacticoCPP.tablaCuartetos.pintar();*/
         
         //System.out.println(codigo3D);
         ComprobadorTipos c = new ComprobadorTipos();

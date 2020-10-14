@@ -15,7 +15,8 @@ public class TablaSimbolos {
     8. CONST_FLOAT
     9. CONST_CHAR
     10. FUNCTION
-    11. CLASE
+    11. PROCEDIMIENTO
+    12. CLASE
     0. 
     */
     

@@ -17,6 +17,12 @@ public class TablaCuartetos {
     9. CONCAT
     10.VAR
     11.MOD
+    12.FUNCTION
+    13.PROCEDIMIENTO
+    14.CLOSE
+    15.SCANF
+    16.
+    17.
     */
     
     

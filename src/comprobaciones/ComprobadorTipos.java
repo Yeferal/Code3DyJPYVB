@@ -57,7 +57,7 @@ public class ComprobadorTipos {
         
     }
     public boolean isChar(String txt){
-        if(txt.length()==1){
+        if(txt.length()==3){
            return true;
         }
         return false;
@@ -134,9 +134,9 @@ public class ComprobadorTipos {
     
     public Object tiparObjeto(Object operacion){
         Object objeto = null;
-        System.out.println("Valor: "+operacion);
+        //System.out.println("Valor: "+operacion);
         float residuo = (float) operacion % 2;
-        System.out.println("Residuo: "+residuo);
+        //System.out.println("Residuo: "+residuo);
         if(isInteger(operacion)){
             //System.out.println("Tipo Int");
             objeto = (Integer) operacion;

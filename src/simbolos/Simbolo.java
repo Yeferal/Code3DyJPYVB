@@ -14,6 +14,9 @@ public class Simbolo {
     1. INTEGER
     2. DECIMAL
     3. CHAR
+    12.FUNCTION
+    13.PROCEDIMIENTO
+    14.CLASE
     */
     
     private String nombre, tipo;

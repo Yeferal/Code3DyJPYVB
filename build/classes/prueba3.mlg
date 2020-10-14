@@ -1,17 +1,18 @@
 %%VB
 
-public sub hola()
+public sub hola(h as Integer, d as Integer)
     Dim N as integer
-    Dim c as integer
+    Dim cg = 'd'
     Dim f as Decimal
     Dim Fact, Factorial, Num As Integer
+    Dim c = intinput("HOLLAAAAAAAA")
     N = 10
     Num = N
     f = 5/(1+1)
     FACTORIAL = 5
         MsgBox("Hola: " + (FACTORIAL-1)*5+ "l")
 
-
+    
     
     while n < 5 
         FACTORIAL = 2
@@ -35,6 +36,20 @@ public sub hola()
     End If*/
     
 End sub
+
+function HOL(h as Integer) as Integer
+    Dim Fact, Factorial, N As Integer
+    while n < 5 
+        FACTORIAL = 2
+        while n > 3
+            If N = 0 Then
+                Dim hola as integer
+                Factorial = 1
+            End If
+        End While
+    End While
+    return 5
+end function
 
 %%JAVA
 public class algo{
