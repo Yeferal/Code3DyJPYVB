@@ -16,6 +16,7 @@ public class TablaCuartetos {
     8. PRINT
     9. CONCAT
     10.VAR
+    11.MOD
     */
     
     

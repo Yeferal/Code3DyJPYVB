@@ -33,6 +33,7 @@ Letra           = ([a-zA-Z] | ñ | Ñ)
 Digito          = [0-9]
 Numero          = {Digito} {Digito}*
 LqSea           =  ({Signo}|{Letra}|{Numero})*
+Cadena          = ("\"" [^\"]* "\"" )
 Espacio         = [ \b\n\r]+
 %%
 
@@ -42,9 +43,9 @@ Espacio         = [ \b\n\r]+
     ("%%VB" ({LqSea}|.|\n)*)("%%JAVA" ({LqSea}|.|\n)*)("%%PY" ({LqSea}|.|\n)*) ("%%PROGRAMA")            {System.out.println("%%PROGRAMA"); return new Symbol(SimbolosCPP.SEPARADOR_PROGRAMA , yycolumn, yyline, yytext());}
     
     "\"VB\""                                                                    {System.out.println("Todas fVB: "+yytext()); return new Symbol(SimbolosCPP.VB_ALL , yycolumn, yyline, yytext());}
-    ("\"VB." ({Letra})("_"| {Letra}| {Numero})* "()\"")                         {System.out.println("Una FuncionVB: "+yytext()); return new Symbol(SimbolosCPP.VB_ONE , yycolumn, yyline, yytext());}
+    //("\"VB." ({Letra})("_"| {Letra}| {Numero})* "()\"")                         {System.out.println("Una FuncionVB: "+yytext()); return new Symbol(SimbolosCPP.VB_ONE , yycolumn, yyline, yytext());}
     "\"PY\""                                                                    {System.out.println("Todas fPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ALL , yycolumn, yyline, yytext());}
-    ("\"PY." ({Letra})("_"| {Letra}| {Numero})* "()\"")                          {System.out.println("Una FuncionPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ONE , yycolumn, yyline, yytext());}
+    //("\"PY." ({Letra})("_"| {Letra}| {Numero})* "()\"")                          {System.out.println("Una FuncionPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ONE , yycolumn, yyline, yytext());}
     "\"JAVA.*\""                                                                {System.out.println("Todas las clases: "+yytext()); return new Symbol(SimbolosCPP.JV_ALL , yycolumn, yyline, yytext());}
     ("\"JAVA." ({Letra})("_"| {Letra}| {Numero})*"\"")                          {System.out.println("Una clase: "+yytext()); return new Symbol(SimbolosCPP.JV_ONE , yycolumn, yyline, yytext());}
 
@@ -127,8 +128,8 @@ Espacio         = [ \b\n\r]+
     
     ({Numero}"."{Numero})                       {System.out.println("DECIMAL: "+yytext()); return new Symbol(SimbolosCPP.DECIMAL , yycolumn, yyline, new Float(yytext()));}
     ({Numero})                                  {System.out.println("NUMERO: "+yytext()); return new Symbol(SimbolosCPP.NUMERO , yycolumn, yyline,new Integer(yytext()));}
-    ("'"({LqSea}|.)*"'")                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.VALOR , yycolumn, yyline, yytext());}
-    ("\""({LqSea}|.)*"\"")                      {System.out.println(yytext()); return new Symbol(SimbolosCPP.TEXTO , yycolumn, yyline, yytext());}
+    ("'"[^\"]"'")                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.VALOR , yycolumn, yyline, yytext());}
+    {Cadena}                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.TEXTO , yycolumn, yyline, yytext());}
     
     
     //{Siguiente}                                   {/*Ignore*/}

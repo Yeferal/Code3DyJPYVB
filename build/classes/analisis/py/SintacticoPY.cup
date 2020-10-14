@@ -90,7 +90,7 @@ non terminal INICIO, declaracion_var, codigo, valor, funcion, codigo_def, tabs;
 non terminal ciclos, struct_for, datos_for, dato, mas_datos, struct_while, retunr_v;
 non terminal condicion, condiciones, pre, not, condicionales, struc_if, solicitud;
 non terminal mensajes, parametros, params, codigo_inicio, val, valor_tipo, comentarios;
-non terminal param_range, condicionales_1, condicion_xtra, condicioness;
+non terminal param_range, condicionales_1, condicion_xtra, condicioness, operacion_msg;
 //non terminal ;
 
 //presedencia de menor a mayor
@@ -198,7 +198,6 @@ valor ::=    valor:a MAS valor:b {:
                                 if(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
                                     int resultado = (int) ((int)nodeA.getValor()+(int)nodeB.getValor()); 
                                     contadorEVT++;
-                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
                                     tablaCuartetos.agregarCuarteto(new Cuarteto("SUMA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,4));
                                     RESULT = new Nodo("t"+contadorEVT,resultado);
                                 }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())+(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
@@ -206,7 +205,6 @@ valor ::=    valor:a MAS valor:b {:
                                 }
                             }else{
                                 contadorEVT++;
-                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
                                     tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
                                     //RESULT = new Nodo("t"+contadorEVT,resultado);
                                 String texto = nodeA.getValor() +""+ nodeB.getValor(); RESULT = new Nodo(texto,texto);
@@ -217,8 +215,6 @@ valor ::=    valor:a MAS valor:b {:
                         if(a!=null && b!=null){
                             contadorEVT++;
                             Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
-                            codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
-                            
                             tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
                             String texto = nodeA.getValor() +""+nodeB.getValor(); RESULT = new Nodo(texto,texto);
                         }else{RESULT = null;}
@@ -896,15 +892,22 @@ struc_if ::= IF:aa {:
                     }
                 :} DOS_PUNTOS SALTO ;
 
-mensajes ::= PRINT:a {:
+mensajes ::= PRINT:aa {:
                     if(ambitoContador==0){
-                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                        erroresSemanticos.add(new ErrorG((String)aa,aaright+1,aaleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
                     }
-                :} val PARENTESIS_C SALTO;
+                :} val:a PARENTESIS_C {:
+                        if(a!=null){
+                            Nodo nodeA = (Nodo)a;
+                            contadorEVT++;
+                            //codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("PRINT",nodeA.getText(),"","",8));
+                        }
+                :} SALTO;
 
-solicitud ::=    INTINPUT:a {:
+solicitud ::=    INTINPUT:aa {:
                     if(ambitoContador==0){
-                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
+                        erroresSemanticos.add(new ErrorG((String)aa,aaright+1,aaleft+1,2,"Error de identacion, unicamente las Funciones no pueden tener tabulacion"));
                     }
                 :} PARENTESIS_A val PARENTESIS_C {:RESULT = (int)0;:}
                 |FLOATINPUT:a {:
@@ -920,9 +923,135 @@ solicitud ::=    INTINPUT:a {:
                     }*/
                 :} PARENTESIS_A val PARENTESIS_C {:RESULT = (char)'c';:};
 
-val ::= valor
+val ::= operacion_msg:a {:RESULT = a;:}
         |;
 
 comentarios ::=  COMENTARIO_SIMPLE
                 |COMENTARIO_VARIOS;
 
+operacion_msg ::=  operacion_msg:a MAS operacion_msg:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if(comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if((nodeA.getValor()!=null && nodeB.getValor()!=null) && comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
+                                    int resultado = (int) ((int)nodeA.getValor()+(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SUMA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,4));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())+(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }
+                            }else{
+                                contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
+                                    //RESULT = new Nodo("t"+contadorEVT,resultado);
+                                String texto = nodeA.getText() +"+"+ nodeB.getText(); RESULT = new Nodo("t"+contadorEVT,texto);
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_msg:a COMA operacion_msg:b {: 
+                        if(a!=null && b!=null){
+                            contadorEVT++;
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                            
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("CONCAT",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,9));
+                            String texto = nodeA.getValor() +"+"+nodeB.getText(); RESULT = new Nodo("t"+contadorEVT,texto);
+                        }else{RESULT = null;}
+                :}
+                |operacion_msg:a MENOS:c operacion_msg:b {:
+                        if((a!=null && b!=null)){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if((nodeA.getValor()!=null && nodeB.getValor()!=null) && (comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor()))){
+                                if((comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor()))){
+                                    int resultado = (int) ((int)nodeA.getValor()-(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" - "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("RESTA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,5));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())-(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" - "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("RESTA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,5));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);}
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_msg:a POR:c operacion_msg:b {:
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if((nodeA.getValor()!=null && nodeB.getValor()!=null) && comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                if(!(comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor()))){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())*(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" * "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("POR",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,6));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{int resultado = (int) ((int)nodeA.getValor()*(int)nodeB.getValor()); 
+                                    contadorEVT++;
+                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" * "+nodeB.getText()+"\n";
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("POR",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,6));
+                                    RESULT = new Nodo("t"+contadorEVT,resultado);}
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_msg:a DIV:c operacion_msg:b {: 
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if((nodeA.getValor()!=null && nodeB.getValor()!=null) && comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                contadorEVT++;
+                                codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" / "+nodeB.getText()+"\n";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("DIV",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,7));
+                                if(comprobadorTipos.isFloat(nodeA.getValor()) || comprobadorTipos.isFloat(nodeB.getValor())){
+                                    float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())/(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); RESULT = new Nodo("t"+contadorEVT,resultado);
+                                }else{Object resultado = comprobadorTipos.tiparObjeto((int)nodeA.getValor()/(int)nodeB.getValor()); RESULT = new Nodo("t"+contadorEVT,resultado);}
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_msg:a DIV_ENTERO:c operacion_msg:b {:
+                        if(a!=null && b!=null){
+                            Nodo nodeA = (Nodo)a;Nodo nodeB = (Nodo)b;
+                            if((nodeA.getValor()!=null && nodeB.getValor()!=null) && comprobadorTipos.isNumero(nodeA.getValor()) && comprobadorTipos.isNumero(nodeB.getValor())){
+                                contadorEVT++;
+                                codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" / "+nodeB.getText()+"\n";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("DIV",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,7));
+                                int resultado = (int) ((float)nodeA.getValor()/(float)nodeB.getValor());
+                                RESULT = new Nodo("t"+contadorEVT,resultado);
+                            }else{
+                                if(comprobadorTipos.isNumero(nodeA.getValor())){
+                                    erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La operacion no es valida")); RESULT = null;}
+                            }
+                        }else{RESULT = null;}
+                :}
+                |operacion_msg:a POT operacion_msg:b {:RESULT = new Nodo((float)a+"",(float)a);:}
+                |PARENTESIS_A operacion_msg:a PARENTESIS_C {:RESULT = a;:}
+                |CORCHETE_A operacion_msg:a CORCHETE_C {:RESULT = a;:}
+                |LLAVES_A operacion_msg:a LLAVES_C {:RESULT = a;:}
+                |IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                RESULT = new Nodo((String) a,tablaSimbolos.getSimboloValor());
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :}
+                |TEXTO:a {:RESULT = new Nodo((String)a,(String)a);:}
+                |DECIMAL:a {:RESULT = new Nodo((float)a+"",(float)a);:}
+                |NUMERO:a {:RESULT = new Nodo((Integer)a+"",(Integer)a);:}
+                |VALOR:a {:
+                    //contadorEVT++;
+                   // tablaCuartetos.agregarCuarteto(new Cuarteto("PRINT",(String)a,"","",8));
+                    RESULT = new Nodo((String)a,(String)a);
+                :};

@@ -54,10 +54,10 @@ public class Main {
         AnalizadorLexicoIm analizadorLexicoIm = new AnalizadorLexicoIm(new StringReader("\"JAVA.*\""));
         AnalizadorSintacticoIm analizadorSintacticoIm = new AnalizadorSintacticoIm(analizadorLexicoIm);
         try {
-            //analizadorSintacticoVB.parse();
-            //analizadorSintacticoJAVA.parse();
+            analizadorSintacticoVB.parse();
+            analizadorSintacticoJAVA.parse();
             analizadorSintacticoPY.parse();
-            //analizadorSintacticoCPP.parse();
+            analizadorSintacticoCPP.parse();
             
             //analizadorSintacticoIm.parse();
             
@@ -66,45 +66,55 @@ public class Main {
             //analizadorSintacticoVB.tablaSimbolos.pintar();
             /*System.out.println("\nTabla Simbolos JAVA");
             analizadorSintacticoJAVA.tablaSimbolos.pintar();*/
-            System.out.println("\nTabla Simbolos PY");
-            analizadorSintacticoPY.tablaSimbolos.pintar();
-            /*System.out.println("\nTabla Simbolos CPP");
-            analizadorSintacticoCPP.tablaSimbolos.pintar();*/
+            //System.out.println("\nTabla Simbolos PY");
+            //analizadorSintacticoPY.tablaSimbolos.pintar();
+            //System.out.println("\nTabla Simbolos CPP");
+            //analizadorSintacticoCPP.tablaSimbolos.pintar();
         } catch (Exception ex) {
             //ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        /*System.out.println("\nErrores VB");
+        System.out.println("\nErrores VB");
         for (int i = 0; i < analizadorSintacticoVB.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSintactico.get(i).toString());
         }
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
-        }*/
-        /*System.out.println("\nErrores JAVA");
+        }
+        System.out.println("\nErrores JAVA");
+        for (int i = 0; i < analizadorSintacticoJAVA.erroresSintactico.size(); i++) {
+            System.out.println(analizadorSintacticoJAVA.erroresSintactico.get(i).toString());
+        }
         for (int i = 0; i < analizadorSintacticoJAVA.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoJAVA.erroresSemanticos.get(i).toString());
-        }*/
+        }
         System.out.println("\nErrores PY");
         for (int i = 0; i < analizadorSintacticoPY.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoPY.erroresSintactico.get(i).toString());
         }
         for (int i = 0; i < analizadorSintacticoPY.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoPY.erroresSemanticos.get(i).toString());
-        }/*
+        }
         System.out.println("\nErrores PROGRAMA PRINCIPAL");
+        for (int i = 0; i < analizadorSintacticoCPP.erroresSintactico.size(); i++) {
+            System.out.println(analizadorSintacticoCPP.erroresSintactico.get(i).toString());
+        }
         for (int i = 0; i < analizadorSintacticoCPP.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());
-        }*/
+        }
         System.out.println("");
         //String h = "'c'";
         //System.out.println("SUB: "+h.substring(1, 2));
         
-        //System.out.println("\nCuartetos VB");
-        //analizadorSintacticoVB.tablaCuartetos.pintar();
+        System.out.println("\nCuartetos VB");
+        analizadorSintacticoVB.tablaCuartetos.pintar();
         System.out.println("\nCuartetos PY");
         analizadorSintacticoPY.tablaCuartetos.pintar();
+        System.out.println("\nCuartetos JAVA");
+        analizadorSintacticoJAVA.tablaCuartetos.pintar();
+        System.out.println("\nCuartetos CPP");
+        analizadorSintacticoCPP.tablaCuartetos.pintar();
         
         //System.out.println(codigo3D);
         ComprobadorTipos c = new ComprobadorTipos();

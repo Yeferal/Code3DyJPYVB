@@ -12,7 +12,7 @@ public sub hola()
         MsgBox("Hola: " + (FACTORIAL-1)*5+ "l")
 
 
-    /*
+    
     while n < 5 
         FACTORIAL = 2
         while n > 3
@@ -23,7 +23,7 @@ public sub hola()
         End While
     End While
     
-*/
+
     /*If N = 0 and N<4 and n<5 and n=5 Then
     	Dim hola as integer
         Factorial = 1
@@ -140,7 +140,7 @@ def edadmeses(edad, mesess):
     for i in range(1,2):
         edad = 2
     edad = 2
-
+    print("meses = ",n)
     #intinput("")
     """for i = 0 in range():
     range(1)
@@ -186,7 +186,7 @@ int Arreglo1[1][4];
 
 void main()
 {
-    int base, exp, i, resultado;
+    int base, exp, i, resultado = 5;
 
     clrscr();
 
@@ -198,7 +198,11 @@ void main()
     scanf("%d",&base);
     printf("Ingrese el segudo valor entero");
     scanf("%d",&exp);
-
+    
+    if(resultado<5 || resultado==8){
+        
+    }
+    
     // Factorial
     resultado = VB.Factorial(i);
 
@@ -210,13 +214,13 @@ void main()
 
     // Arreglo
     Arreglo1[1][1] = 0;
-
+    base = 5;
     // inicio for
-    for(i = 0; i <= exp; i = i + 1)
+    for(int j = 0; j <= 10; j++)
     {
       resultado = resultado * base;
     } // fin for
-
+    
     printf("%d ",base);
     printf("^ %d",exp);
     printf(" = %d",resultado);
@@ -224,4 +228,14 @@ void main()
     getch();
     //return 0;
 }
+
+
+
+
+
+
+
+
+
+
 

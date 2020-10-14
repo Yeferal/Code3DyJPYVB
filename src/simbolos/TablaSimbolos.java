@@ -51,7 +51,7 @@ public class TablaSimbolos {
         //System.out.println("-----------------------------"+ambitosCamino+"--entre--: "+nombre+"---ambito: ");
         for (int i = 0; i < listaSimbolos.size(); i++) {
             if(listaSimbolos.get(i).getNombre().equalsIgnoreCase(nombre)){
-                System.out.println(listaSimbolos.get(i).getNombre()+" |==| "+nombre);
+                //System.out.println(listaSimbolos.get(i).getNombre()+" |==| "+nombre);
                 for (int j = 0; j < ambitosCamino.size(); j++) {
                     if(listaSimbolos.get(i).getAmbito()==ambitosCamino.get(j)){
                         posicionSimbolo = i;
@@ -67,7 +67,7 @@ public class TablaSimbolos {
         //System.out.println("-----------------------------"+ambitosCamino+"--entre--: "+nombre+"---ambito: ");
         for (int i = 0; i < listaSimbolos.size(); i++) {
             if(listaSimbolos.get(i).getNombre().equals(nombre)){
-                System.out.println(listaSimbolos.get(i).getNombre()+" |==| "+nombre);
+                //System.out.println(listaSimbolos.get(i).getNombre()+" |==| "+nombre);
                 for (int j = 0; j < ambitosCamino.size(); j++) {
                     if(listaSimbolos.get(i).getAmbito()==ambitosCamino.get(j)){
                         posicionSimbolo = i;
@@ -89,4 +89,10 @@ public class TablaSimbolos {
         return o;
     }
     
+    public boolean isConstante(){
+        if (listaSimbolos.get(posicionSimbolo).getTipo().equals("CONST_INT") || listaSimbolos.get(posicionSimbolo).getTipo().equals("CONST_FLOAT") || listaSimbolos.get(posicionSimbolo).getTipo().equals("CONST_CHAR")) {
+            return false;
+        }
+        return true;
+    }
 }
