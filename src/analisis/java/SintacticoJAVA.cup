@@ -6,7 +6,7 @@ import comprobaciones.Nodo;
 import comprobaciones.NodoPY;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
-import simbolos.Simbolo;
+import simbolos.*;
 import simbolos.TablaSimbolos;
 import tresdirecciones.*;
 import errores.ErrorG;
@@ -18,6 +18,11 @@ parser code
     public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
     public ArrayList<ErrorG> erroresSintactico = new ArrayList<>();
     public TablaCuartetos tablaCuartetos = new TablaCuartetos();
+    public int contadorEVT = 0;
+    public int contadorET = 0;
+    public ArrayList<NodoFuncionP> listaF = new ArrayList<>();
+    public ArrayList<NodoClase> listaCls = new ArrayList<>();
+    ArrayList<Integer> listaParametros = new ArrayList<>();
     
     private Symbol s;
     public void syntaxError(Symbol s){
@@ -60,9 +65,15 @@ action code
     int banderaET = 0;
     String op = "";
     String tipoV = "";
+    String idFP = "";
+    String idClase = "";
     String codigo3D = "";
     ArrayList<Integer> ambitos = new ArrayList<>();
     TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    public ArrayList<NodoFuncionP> listaF = new ArrayList<>();
+    public ArrayList<NodoClase> listaCls = new ArrayList<>();
+    ArrayList<Integer> listaParametros = new ArrayList<>();
+    NodoClase nodoClase = null;
 :}
 
 //Declaraciones 
@@ -73,7 +84,7 @@ terminal SOUT, INTINPUT, FLOATINPUT, CHARINPUT, FOR, WHILE, DO, IF, ELSE, SWITCH
 terminal CASE, BREAK, DEFAULT, VOID, RETURN, PUBLIC, IDENTIFICADOR, DECIMAL;
 terminal NUMERO, VALOR, DOS_PUNTOS,CORCHETE_A, CORCHETE_C, LLAVES_A;
 terminal LLAVES_C, PUNTO_COMA, COMA, PARENTESIS_A, PARENTESIS_C, MAS_MAS, MENOS_MENOS;
-terminal IGUAL_IGUAL, TEXTO;
+terminal IGUAL_IGUAL, TEXTO, THIS;
 //terminal ;
 
 
@@ -87,7 +98,8 @@ non terminal valor_condicional, valor, struct_do_while, comentarios, codigo_func
 non terminal struc_condicional, struc_logico, struc_logico_not, vars, valor_m;
 non terminal mensaje, valor_comprobacion, codigo_funcion, codigo_inicial, inputs, struc_else_return;
 non terminal struc_ciclos_return, struc_if_return, struct_for_return, struct_do_while_return, struct_while_return;
-non terminal struc_constructor;
+non terminal struc_constructor, s_vars, codigo_constructor, s33, s_c, s_n;
+non terminal struc_params_cons, params_cons, struc_vars_params_cons;
 
 //presedencia de menor a mayor
 precedence left NOT;
@@ -100,17 +112,27 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   SEPARADOR_JAVA {:ambitoFlag=0;ambitoActual=ambitoFlag;:} codigo_inicial SEPARADOR_PROGRAMA {:
+INICIO ::=   SEPARADOR_JAVA {:ambitoFlag=0;ambitoActual=ambitoFlag;
+                        contadorEVT = parser.contadorEVT;
+                        contadorET = parser.contadorET;
+            :} codigo_inicial SEPARADOR_PROGRAMA {:
                             parser.tablaSimbolos = tablaSimbolos; 
                             parser.erroresSemanticos = erroresSemanticos; 
                             parser.tablaCuartetos = tablaCuartetos; 
+                            parser.contadorEVT = contadorEVT;
+                            parser.contadorET = contadorET;
+                            parser.listaCls = listaCls;
+                            parser.listaF = listaF;
             :};
 
 
 codigo_inicial ::=   struc_clase;
 
+s_vars ::= struc_vars s_vars
+        |;
 
 codigo ::=   struc_vars codigo
+            |struc_constructor codigo
             |struc_function codigo
             |mensaje codigo
             |comentarios codigo
@@ -130,9 +152,53 @@ codigo_funcion ::=   struc_vars codigo_funcion
 comentarios ::=  COMENTARIO_SIMPLE
                 |COMENTARIO_VARIOS;
 
-struc_clase ::=  PUBLIC CLASS IDENTIFICADOR LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} 
-                codigo LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} struc_clase
+struc_clase ::=  PUBLIC CLASS IDENTIFICADOR:a {:idClase=(String)a; nodoClase = new NodoClase(idClase); listaF = new ArrayList<>();
+                        idClase = (String)a;
+                        tablaCuartetos.limpiarAux();
+                            tablaSimbolos.agregarSimbolo(new Simbolo((String)a,"CLASE",0,null));
+                :} LLAVES_A {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} 
+                codigo LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();
+                tablaCuartetos.agregarCuarteto(new Cuarteto("CLOSE", "","","}",14));
+                nodoClase.setListaF(listaF);
+                nodoClase.setTablaCuartetos(tablaCuartetos.getAuxClase());
+                listaCls.add(nodoClase);
+                :} struc_clase 
                 |;
+
+struc_constructor ::= PUBLIC IDENTIFICADOR:a {:  listaParametros = new ArrayList<>();
+                                ambitoFlag++;ambitoActual=ambitoFlag;
+                                comprobadorAmbito.agregarAmbito(ambitoFlag);
+                                idFP = (String)a;
+                                tablaSimbolos.agregarSimbolo(new Simbolo((String)a,"PROCEDIMIENTO",0,null));
+                                if(!idFP.equals(idClase)){
+                                    erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"el constructor no tiene el nombre correcto"));
+                                }
+                    :} PARENTESIS_A struc_params_cons:b {:
+                            if(b!=null){
+                                String nameF = "void JAVA_"+idClase+"_"+idFP+(String)b+"()";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("PROCEDIMIENTO", "","",nameF,12));
+                            }else{String nameF = "void main()"; tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));}
+                    :} PARENTESIS_C LLAVES_A codigo_constructor LLAVES_C  {:
+                                comprobadorAmbito.sacarAmbito();
+                                ambitoActual=comprobadorAmbito.getAmbitoActual();
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("CLOSE", "","","}",14));
+                                NodoFuncionP nF = new NodoFuncionP(idFP,true, false);
+                                nF.setListaParametros(listaParametros);
+                                listaF.add(nF);
+                    :};
+
+codigo_constructor ::= THIS IDENTIFICADOR:a IGUAL IDENTIFICADOR:b PUNTO_COMA {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                    
+                                    Simbolo s = tablaSimbolos.getSimbolo();
+                                    if(tablaSimbolos.isConstante() ){
+                                        //tablaSimbolos.setSimbolo(nodeB.getValor());
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",(String)b,"",(String)a,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+
+                                }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
+                        :} codigo_constructor
+                      |;
 
 struc_vars ::=   INT {:tipoV="Integer";:} struc_asig_vars_n PUNTO_COMA
                 |FLOAT {:tipoV="Float";:} struc_asig_vars_n PUNTO_COMA
@@ -152,17 +218,26 @@ struc_vars ::=   INT {:tipoV="Integer";:} struc_asig_vars_n PUNTO_COMA
                             }
                         :};
 
-struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; Nodo nodeA = (Nodo)a;
+struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL s_n:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
-                                tipo = tipoV;
+                                tipo = tipoV;nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                
                                 Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
-                                    tablaSimbolos.agregarSimbolo(s);
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                tablaSimbolos.agregarSimbolo(s);
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                        tablaSimbolos.agregarSimbolo(s);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :} COMA struc_asig_vars_n
                         |IDENTIFICADOR:b {:
@@ -172,17 +247,26 @@ struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; 
                                 tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipoV)+" "+(String)b+";",10));
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :} COMA struc_asig_vars_n
-                        |IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; Nodo nodeA = (Nodo)a;
+                        |IDENTIFICADOR:b IGUAL s_n:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
-                                tipo = tipoV;
+                                tipo = tipoV;nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                
                                 Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
-                                    tablaSimbolos.agregarSimbolo(s);
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                tablaSimbolos.agregarSimbolo(s);
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                        tablaSimbolos.agregarSimbolo(s);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :}
                         |IDENTIFICADOR:b {:
@@ -193,15 +277,37 @@ struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; 
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :};
 
-struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
+s_n ::=  valor_n:a {:RESULT = a; :}
+        |inputs:a {:
+        if(a!=null){
+            if((int)a==1){
+                RESULT = new Nodo("%d",0,1);
+            }else if((int)a==2){
+                RESULT = new Nodo("%f",0.0,2);
+            }
+            
+        }:};
+
+struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL s_c:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
-                                tipo = tipoV;
+                                tipo = tipoV;nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
-                                    tablaSimbolos.agregarSimbolo(s);
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                
+                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                tablaSimbolos.agregarSimbolo(s);
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                        tablaSimbolos.agregarSimbolo(s);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :} COMA struc_asig_vars_c
                         |IDENTIFICADOR:b {:
@@ -210,15 +316,27 @@ struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :} COMA struc_asig_vars_c
-                        |IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
+                        |IDENTIFICADOR:b IGUAL s_c:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
-                                tipo = tipoV;
+                                tipo = tipoV; 
+                                nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
-                                    tablaSimbolos.agregarSimbolo(s);
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                
+                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                tablaSimbolos.agregarSimbolo(s);
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                        tablaSimbolos.agregarSimbolo(s);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :}
                         |IDENTIFICADOR:b {:
@@ -227,6 +345,15 @@ struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :};
+
+s_c ::= valor_c:a {:RESULT = a; :}
+        |inputs:a {:
+        if(a!=null){
+            if((int)a==3){
+                RESULT = new Nodo("%c",'c',3);
+            }
+            
+        }:};
 
 struc_ciclos ::= struct_for
                 |struct_do_while
@@ -363,9 +490,7 @@ valor_c ::=  valor_c:a MAS:c valor_c:b
             |valor_c:a DIV:c valor_c:b 
             |PARENTESIS_A valor_c:a PARENTESIS_C
             |IDENTIFICADOR:a
-            |VALOR:a {:RESULT = (Integer)a;:}
-            |NUMERO:a {:RESULT = (Integer)a;:}
-            |DECIMAL:a ;
+            |VALOR:a {:RESULT = new Nodo((String)a, (String)a, 0);:};
 
 valor_n ::=  valor_n:a MAS:c valor_n:b {:
                         if(a!=null && b!=null){
@@ -1354,40 +1479,111 @@ valor_case ::=   VALOR:a {:
                     }
         :};
 
-struc_function ::=  PUBLIC VOID IDENTIFICADOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
-                   |PUBLIC IDENTIFICADOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C  {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
-                   |PUBLIC vars IDENTIFICADOR {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion_return LLAVES_C  {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:};
+struc_function ::=  PUBLIC VOID IDENTIFICADOR:a {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag); listaParametros = new ArrayList<>();
+                            idFP = (String)a;
+                            tablaSimbolos.agregarSimbolo(new Simbolo((String)a,"PROCEDIMIENTO",0,null));
+                    :} PARENTESIS_A struc_params:b {:
+                            if(b!=null){
+                                String nameF = "void JAVA_"+idClase+"_"+idFP+(String)b+"()";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));
+                            }else{String nameF = "void main()"; tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));}
+                    :} PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();
+                                NodoFuncionP nF = new NodoFuncionP(idFP,false, false);
+                                nF.setListaParametros(listaParametros);
+                                listaF.add(nF);
+                    :}
+                   |PUBLIC vars IDENTIFICADOR:a {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag); listaParametros = new ArrayList<>();
+                            idFP = (String)a;
+                            tablaSimbolos.agregarSimbolo(new Simbolo((String)a,"PROCEDIMIENTO",0,null));
+                    :} PARENTESIS_A struc_params:b {:
+                            if(b!=null){
+                                String nameF = "void JAVA_"+idClase+"_"+idFP+(String)b+"()";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));
+                            }else{String nameF = "void main()"; tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));}
+                    :} PARENTESIS_C LLAVES_A codigo_funcion_return LLAVES_C  {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();
+                                    NodoFuncionP nF = new NodoFuncionP(idFP,false, true);
+                                nF.setListaParametros(listaParametros);
+                                listaF.add(nF);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("CLOSE", "","","}",14));
+                    :};
 
-struc_params ::= struc_vars_params params
-                |;
+struc_params_cons ::= struc_vars_params_cons:a params_cons:b {:
+                    if(b!=null){
+                        RESULT = "_"+(String)a+"_"+(String)b;
+                    }else{ RESULT = "_"+(String)a;}
+                :} 
+                |{:RESULT = "";:};
+struc_params ::= struc_vars_params:a params:b {:
+                    if(b!=null){
+                        RESULT = "_"+(String)a+"_"+(String)b;
+                    }else{ RESULT = "_"+(String)a;}
+                :} 
+                |{:RESULT = "";:};
 
-params ::=   COMA struc_vars_params params
+params_cons ::=   COMA struc_vars_params_cons:a params_cons:b {:
+                    if(b!=null){
+                        RESULT = (String)a+"_"+(String)b;
+                    }else{RESULT = (String)a;}
+            :}
             |;
 
-struc_vars_params ::=    INT IDENTIFICADOR:b {:
+params ::=   COMA struc_vars_params:a params:b {:
+                    if(b!=null){
+                        RESULT = (String)a+"_"+(String)b;
+                    }else{RESULT = (String)a;}
+            :}
+            |;
+
+struc_vars_params_cons ::=    INT IDENTIFICADOR:b {: listaParametros.add(1);
+                            Simbolo s = new Simbolo((String)b,"Integer",ambitoActual,null);
+                                tablaSimbolos.agregarSimbolo(s);
+                            RESULT = "int";
+                        :}
+                        |FLOAT IDENTIFICADOR:b {: listaParametros.add(2);
+                            Simbolo s = new Simbolo((String)b,"Float",ambitoActual,null);
+                                tablaSimbolos.agregarSimbolo(s);
+                            RESULT = "float";
+                        :}
+                        |CHAR IDENTIFICADOR:b {: listaParametros.add(3);
+                            Simbolo s = new Simbolo((String)b,"Char",ambitoActual,null);
+                                tablaSimbolos.agregarSimbolo(s);
+                            RESULT = "char";
+                        :};
+
+struc_vars_params ::=    INT IDENTIFICADOR:b {: listaParametros.add(1);
                             Simbolo s = new Simbolo((String)b,"Integer",ambitoActual,null);
                             if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = "int";
                         :}
-                        |FLOAT IDENTIFICADOR:b {:
+                        |FLOAT IDENTIFICADOR:b {: listaParametros.add(2);
                             Simbolo s = new Simbolo((String)b,"Float",ambitoActual,null);
                             if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = "float";
                         :}
-                        |CHAR IDENTIFICADOR:b {:
+                        |CHAR IDENTIFICADOR:b {: listaParametros.add(3);
                             Simbolo s = new Simbolo((String)b,"Char",ambitoActual,null);
                             if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = "char";
                         :};
 
 vars ::=     INT
             |FLOAT
             |CHAR;
 
-mensaje ::= SOUT valor_m PARENTESIS_C PUNTO_COMA;
+mensaje ::= SOUT valor_m:a PARENTESIS_C PUNTO_COMA {:
+                if(a!=null){
+                    Nodo nodeA = (Nodo)a;
+                    contadorEVT++;
+                    //codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
+                    tablaCuartetos.agregarCuarteto(new Cuarteto("PRINT",nodeA.getText(),"","",8));
+                }
+            :};
 
 valor_m ::=  valor_m:a MAS:c valor_m:b {: 
                         if(a!=null && b!=null){
@@ -1486,9 +1682,12 @@ valor_m ::=  valor_m:a MAS:c valor_m:b {:
                     RESULT = new Nodo((String)a,(String)a);
                 :};
 
-inputs ::=   CHARINPUT
-            |FLOATINPUT
-            |INTINPUT;
+inputs ::=   INTINPUT PARENTESIS_A s33:a PARENTESIS_C {:tablaCuartetos.agregarCuarteto(new Cuarteto("PRINT", (String)a+"","","",8)); RESULT = 1;:}
+            |FLOATINPUT PARENTESIS_A s33:a PARENTESIS_C {:tablaCuartetos.agregarCuarteto(new Cuarteto("PRINT", (String)a+"","","",8)); RESULT = 2;:}
+            |CHARINPUT PARENTESIS_A s33:a PARENTESIS_C {:tablaCuartetos.agregarCuarteto(new Cuarteto("PRINT", (String)a+"","","",8)); RESULT = 3;:};
+
+s33 ::=   VALOR:a {:RESULT = (String)a;:}
+        |{:RESULT = "";:};
 
 codigo_funcion_return ::=    struc_vars codigo_funcion_return
                             |struc_ciclos_return codigo_funcion_return
@@ -1497,6 +1696,11 @@ codigo_funcion_return ::=    struc_vars codigo_funcion_return
                             |mensaje codigo_funcion_return
                             |inputs codigo_funcion_return
                             |comentarios codigo_funcion_return
-                            |RETURN valor PUNTO_COMA
+                            |RETURN valor:r PUNTO_COMA {:
+                                if(r!=null){
+                                        Nodo nodeB = (Nodo)r; contadorEVT++;
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("", nodeB.getText(),"","t"+contadorEVT,0));
+                                }
+                            :}
                             |
                             |error:e {:parser.syntax_error((Symbol)e); :} codigo_funcion_return;

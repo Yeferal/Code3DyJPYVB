@@ -1,14 +1,20 @@
 package analisis.cpp;
 import java_cup.runtime.*;
 import java.util.ArrayList;
+import errores.ErrorG;
 
 %%
 %{
     //coidgo de usuario en sintaxis java
-    //public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
+    public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
 
     public void pintar(String s){
         System.out.println(yytext());
+    }
+    
+    public String obtenerSub(String texto){
+        String t = texto.substring(6, texto.length()-1);
+        return t;
     }
 
 %}
@@ -47,7 +53,7 @@ Espacio         = [ \b\n\r]+
     "\"PY\""                                                                    {System.out.println("Todas fPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ALL , yycolumn, yyline, yytext());}
     //("\"PY." ({Letra})("_"| {Letra}| {Numero})* "()\"")                          {System.out.println("Una FuncionPY: "+yytext()); return new Symbol(SimbolosCPP.PY_ONE , yycolumn, yyline, yytext());}
     "\"JAVA.*\""                                                                {System.out.println("Todas las clases: "+yytext()); return new Symbol(SimbolosCPP.JV_ALL , yycolumn, yyline, yytext());}
-    ("\"JAVA." ({Letra})("_"| {Letra}| {Numero})*"\"")                          {System.out.println("Una clase: "+yytext()); return new Symbol(SimbolosCPP.JV_ONE , yycolumn, yyline, yytext());}
+    ("\"JAVA." ({Letra})("_"| {Letra}| {Numero})*"\"")                          {System.out.println("Una clase: "+yytext()); return new Symbol(SimbolosCPP.JV_ONE , yycolumn, yyline, obtenerSub(yytext()));}
 
     //Reservadas
     //"main"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.VOID , yycolumn, yyline, yytext());}
@@ -62,6 +68,9 @@ Espacio         = [ \b\n\r]+
     "&&"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.AND , yycolumn, yyline, yytext());}
     "||"                                        {System.out.println(yytext()); return new Symbol(SimbolosCPP.OR , yycolumn, yyline, yytext());}
     "!"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.NOT , yycolumn, yyline, yytext());}
+    "JAVA"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.JV , yycolumn, yyline, yytext());}
+    "PY"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.PY , yycolumn, yyline, yytext());}
+    "VB"                                       {System.out.println(yytext()); return new Symbol(SimbolosCPP.VB , yycolumn, yyline, yytext());}
 
     //Expresiones Aritmeticas
     "++"                                         {System.out.println("MAS_MAS"); return new Symbol(SimbolosCPP.MAS_MAS , yycolumn, yyline, yytext());}
@@ -153,8 +162,8 @@ Espacio         = [ \b\n\r]+
     //".."                                        {System.out.println("PUNTO_PUNTO"); return new Symbol(SimbolosCPP.PUNTO_PUNTO , yycolumn, yyline, yytext());}
 
     .                               {System.out.println("error Lexico: "+"Columna: "+(yycolumn+1)+" linea: "+ (yyline+1) + ", Token: "+yytext());
-                                    /*ErrorG e = new ErrorG((yyline+1), (yycolumn+1),yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + ((int)yyline+1) + " ,    Columna: " + ((int)yycolumn+1));
-                                    listaErrores.add(e);*/
+                                    ErrorG e = new ErrorG(yytext(),yyline+1, yycolumn+1,1,"Error Lexico token: " + yytext());
+                                                listaErrores.add(e);
                                     }
     
 }

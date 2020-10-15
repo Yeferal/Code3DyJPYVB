@@ -53,12 +53,16 @@ end function
 
 %%JAVA
 public class algo{
+        int a;
+        public algo(int a){	
+            this.a = a;	
+	}
 
 	public int holaMundo() {
             System.out.println("asasasd");
             int entero = 10;
             int a,b=5,s;
-            //char cx,ch = 'd';
+            char ch = 'd';
             float ff = 22.5;
             //int entero = 10;
             //char ch = 'd';
@@ -87,7 +91,7 @@ public class algo{
             return 2;
 	}
         
-        public int holaMundo2(int a) {
+        public int holaMundo(int a) {
 		System.out.println("asasasd");
                 if (5<6) {
                         return 0;
@@ -157,10 +161,6 @@ def edadmeses(edad, mesess):
     edad = 2
     print("meses = ",n)
     #intinput("")
-    """for i = 0 in range():
-    range(1)
-    range(1,2)
-    range(1,2,1)"""
     for i in range(1,5,5):
         hola = 'c'
         if 5<6:
@@ -172,11 +172,11 @@ def edadmeses(edad, mesess):
             while h<10:
                 h= h+3
                 return 10
-    hola = 2
+    hol = 2
     return 10
 
 def saludo():
-    //edad = intinput("Ingrese su edad:")
+    edad = intinput("Ingrese su edad:")
     //meses = edad * 12
     //print("meses = ",meses)
     //intinput("")
@@ -187,11 +187,10 @@ def saludo():
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "VB.h()"
+#include "PY"
 #include "VB"
-#include "PY.HOLA()"
 #include "JAVA.*"
-#include "JAVA.hola"
+#include "JAVA.algo"
 
 // Constantes
 const int constante1 = 10;
@@ -202,12 +201,13 @@ int Arreglo1[1][4];
 void main()
 {
     int base, exp, i, resultado = 5;
-
+    JAVA.algo ho;
     clrscr();
-
+    PY.edadmeses();
+    JAVA.ho.holaMundo();
     printf("Bienvenido");
 
-    VB.Saludo();
+    //VB.Saludo();
 
     printf("Ingrese el primer valor entero");
     scanf("%d",&base);
@@ -219,9 +219,10 @@ void main()
     }
     
     // Factorial
-    resultado = VB.Factorial(i);
+    resultado = PY.edadmeses();
+    char resultado2 = JAVA.ho.holaMundo();
 
-    printf("El factorial de %d es %d",&a,&resultado);
+    //printf("El factorial de %d es %d",&a,&resultado);
 
     printf("Conversion de años a meses");
 
@@ -239,8 +240,8 @@ void main()
     printf("%d ",base);
     printf("^ %d",exp);
     printf(" = %d",resultado);
-
-    getch();
+    int dc;
+    dc= getch();
     //return 0;
 }
 

@@ -20,6 +20,8 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private ArrayList<ArchivoExtension> listaArchivos = new ArrayList<>();
     int indicePetania = 0;
     static final String DIAGONAL = "/";
+    ManejadorLenguajes manejadorLenguajes = new ManejadorLenguajes(this);
+    VentanaErrores ventanaErrores = new VentanaErrores();
     Archivo archivo = new Archivo();
     
     public VentanaPrincipal() {
@@ -61,6 +63,42 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         }
         listaArchivos.add(archivoExtension);
         tabbedPanelCode.addTab("Programa", j);
+        
+    }
+    public void agregarPestania3D(ArchivoExtension archivoExtension, String texto3D){
+        
+        JScrollPane j = new JScrollPane();
+            JTextPane jArea = new JTextPane();
+            jArea.addCaretListener(new CaretListener() {
+                @Override
+                public void caretUpdate(CaretEvent e) {
+                    JTextPane editArea = (JTextPane) e.getSource();
+                    int linea = 1,columna = 1;
+                    try {
+                        int carePos = editArea.getCaretPosition();
+                        //linea = editArea.getLineOfOffset(carePos);
+                        //columna = carePos - editArea.getLineStartOffset(linea);
+                        linea +=1;
+                        columna +=1;
+                    } catch (Exception ex) {
+                    }
+                    labelFilCol.setText("Fila: "+linea+",  Columna: "+columna);
+                }
+            });
+            NumeroLinea nL = new NumeroLinea(jArea);
+            jArea.setText(texto3D);
+            j.setRowHeaderView(nL);
+            j.setViewportView(jArea);
+            
+        for (int i = 0; i < listaArchivos.size(); i++) {
+            if(listaArchivos.get(i).getTipo().equals(archivoExtension.getTipo())){
+                listaArchivos.remove(i);
+                tabbedPanelCode.remove(i);
+                break;
+            }
+        }
+        listaArchivos.add(archivoExtension);
+        tabbedPanelCode.addTab("codigo tres Direcciones", j);
         
     }
 
@@ -165,6 +203,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         menuItemEjectASSY = new javax.swing.JMenuItem();
         menuReporte = new javax.swing.JMenu();
         menuItemReporteOp = new javax.swing.JMenuItem();
+        menuErrores = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -246,6 +285,11 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         menuGenerarCodigo.setText("Generar Codigo");
 
         menuItemCodigo3D.setText("Codigo de Tres Direcciones");
+        menuItemCodigo3D.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuItemCodigo3DActionPerformed(evt);
+            }
+        });
         menuGenerarCodigo.add(menuItemCodigo3D);
 
         menuItemCodigoOp.setText("Codigo Optimizado");
@@ -273,6 +317,14 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
         menuItemReporteOp.setText("Reporte Optimizacion");
         menuReporte.add(menuItemReporteOp);
+
+        menuErrores.setText("Reporte Errores");
+        menuErrores.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuErroresActionPerformed(evt);
+            }
+        });
+        menuReporte.add(menuErrores);
 
         menuBar.add(menuReporte);
 
@@ -327,6 +379,21 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         System.exit(0);
     }//GEN-LAST:event_menuItemSalirActionPerformed
 
+    private void menuItemCodigo3DActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemCodigo3DActionPerformed
+        if(listaArchivos.size()>0){
+            JScrollPane jAux = (JScrollPane) tabbedPanelCode.getComponent(indicePetania);
+            JTextPane areaAux = (JTextPane) jAux.getViewport().getComponent(0);
+            String texto = areaAux.getText();
+            manejadorLenguajes.analizarTexto(texto);
+        }else{
+            JOptionPane.showMessageDialog(null, "No existen petañas abiertas");
+        }
+    }//GEN-LAST:event_menuItemCodigo3DActionPerformed
+
+    private void menuErroresActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuErroresActionPerformed
+        ventanaErrores.setVisible(true);
+    }//GEN-LAST:event_menuErroresActionPerformed
+
     
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -334,6 +401,7 @@ public class VentanaPrincipal extends javax.swing.JFrame {
     private javax.swing.JMenu menuArchivo;
     private javax.swing.JMenuBar menuBar;
     private javax.swing.JMenu menuEjecutar;
+    private javax.swing.JMenuItem menuErrores;
     private javax.swing.JMenu menuGenerarCodigo;
     private javax.swing.JMenuItem menuItemAbrir;
     private javax.swing.JMenuItem menuItemCodigo3D;

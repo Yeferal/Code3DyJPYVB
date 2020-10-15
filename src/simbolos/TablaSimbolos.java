@@ -73,8 +73,17 @@ public class TablaSimbolos {
                     if(listaSimbolos.get(i).getAmbito()==ambitosCamino.get(j)){
                         posicionSimbolo = i;
                         return true;
-                    }
+                    }   
                 }
+            }
+        }
+        return false;
+    }
+    
+    public boolean isExiteFId(String nombre){
+        for (int i = 0; i < listaSimbolos.size(); i++) {
+            if (listaSimbolos.get(i).getNombre().equals(nombre)) {
+                return true;
             }
         }
         return false;

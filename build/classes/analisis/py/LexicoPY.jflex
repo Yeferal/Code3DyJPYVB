@@ -1,11 +1,12 @@
 package analisis.py;
 import java_cup.runtime.*;
 import java.util.ArrayList;
+import errores.ErrorG;
 
 %%
 %{
     //coidgo de usuario en sintaxis java
-    //public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
+    public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
     public void pintar(String s){
         System.out.println(s);
     }
@@ -73,8 +74,8 @@ Espacio         = [ \r]
 
 
     //Mensaje Pantalla
-    //"println("               {/*pintar("Mensaje ln: "+yytext()); return new Symbol(SimbolosPY.PRINT_LN , yycolumn, yyline, yytext());*/}
-    "print("               {pintar("Mensaje: "+yytext()); return new Symbol(SimbolosPY.PRINT , yycolumn, yyline, yytext());}
+    //"println"               {/*pintar("Mensaje ln: "+yytext()); return new Symbol(SimbolosPY.PRINT_LN , yycolumn, yyline, yytext());*/}
+    "print"               {pintar("Mensaje: "+yytext()); return new Symbol(SimbolosPY.PRINT , yycolumn, yyline, yytext());}
     
     //Solicitud de Datos
     "intinput"                                  {pintar("intinput"); return new Symbol(SimbolosPY.INTINPUT , yycolumn, yyline, yytext());}
@@ -138,8 +139,8 @@ Espacio         = [ \r]
     //".."                                        {pintar("PUNTO_PUNTO"); return new Symbol(SimbolosPY.PUNTO_PUNTO , yycolumn, yyline, yytext());}
 
     .                               {pintar("error Lexico: "+"Columna: "+yycolumn+1+" linea: "+ yyline+1 + "Token: "+yytext());
-                                    /*ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
-                                    listaErrores.add(e);*/
+                                    ErrorG e = new ErrorG(yytext(),yyline+1, yycolumn+1,1,"Error Lexico token: " + yytext());
+                                                listaErrores.add(e);
                                     }
     
 }

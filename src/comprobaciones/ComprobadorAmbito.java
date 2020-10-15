@@ -103,11 +103,16 @@ public class ComprobadorAmbito {
     public void apilar(NodoPY nodo){
         pila.push(nodo);
     }
+    
     public NodoPY desempilar(){
         if(!pila.isEmpty()){
             return pila.pop();
         }
         return null;
+    }
+    public boolean isVacio(){
+        return pila.isEmpty();
+            
     }
     
     public boolean verificarAm(int tabs, ArrayList<Cuarteto> listaCuartetos, int tipo){
@@ -125,8 +130,11 @@ public class ComprobadorAmbito {
                     if(nodoAux.getCuarteto().getValor2()!=null && !nodoAux.getCuarteto().getValor2().isEmpty()){
                         listaCuartetos.add(new Cuarteto("GOTO", "", "", "et"+nodoAux.getCuarteto().getValor2(), 3));
                     }
-                    if(nodoAux.getCuarteto().getValor1()!=null){
+                    if(nodoAux.getCuarteto().getValor1()!=null && !nodoAux.getCuarteto().getValor1().isEmpty()){
                         listaCuartetos.add(new Cuarteto("ETIQUETA", "et"+nodoAux.getCuarteto().getValor1(), "", "", 3));
+                    }
+                    if(nodoAux.getCuarteto().getOperacion()!=null && !nodoAux.getCuarteto().getOperacion().isEmpty()){
+                        listaCuartetos.add(new Cuarteto("CLOSE", "", "", "}", 14));
                     }
                 }
             }else{
@@ -139,7 +147,9 @@ public class ComprobadorAmbito {
                     if(nodoAux.getCuarteto().getValor1()!=null && !nodoAux.getCuarteto().getValor1().isEmpty()){
                         listaCuartetos.add(new Cuarteto("ETIQUETA", "et"+nodoAux.getCuarteto().getValor1(), "", "", 3));
                     }
-                    
+                    if(nodoAux.getCuarteto().getOperacion()!=null && !nodoAux.getCuarteto().getOperacion().isEmpty()){
+                        listaCuartetos.add(new Cuarteto("CLOSE", "", "", "}", 14));
+                    }
                     return verificarAm(tabs, listaCuartetos, tipo);
                 } 
             }

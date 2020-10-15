@@ -60,6 +60,9 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Codigo de Tres Direcciones"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuItemCodigo3DActionPerformed"/>
+              </Events>
             </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="menuItemCodigoOp">
               <Properties>
@@ -104,6 +107,14 @@
               <Properties>
                 <Property name="text" type="java.lang.String" value="Reporte Optimizacion"/>
               </Properties>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="menuErrores">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Reporte Errores"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuErroresActionPerformed"/>
+              </Events>
             </MenuItem>
           </SubComponents>
         </Menu>

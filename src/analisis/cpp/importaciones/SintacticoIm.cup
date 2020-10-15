@@ -1,13 +1,30 @@
 //codigo usuario
 package analisis.cpp.importaciones;
+import comprobaciones.ComprobadorAmbito;
+import comprobaciones.ComprobadorTipos;
+import comprobaciones.Nodo;
+import comprobaciones.NodoPY;
 import java_cup.runtime.Symbol;
 import java.util.ArrayList;
+import simbolos.Simbolo;
+import simbolos.TablaSimbolos;
+import tresdirecciones.*;
+import errores.ErrorG;
 
 //Codigo para el parser, variables, metodos
 parser code
 {:
+    public ArrayList<Simbolo> listaS = new ArrayList<>();
+    public ArrayList<Cuarteto> listaC = new ArrayList<>();
+    public boolean correcto = false;
+    public int tipo = 0;
     
+    public void setLista(ArrayList<Simbolo> listaS){
+        this.listaS = listaS;
+    }
     
+
+
     private Symbol s;
     public void syntaxError(Symbol s){
         this.s = s;
@@ -36,18 +53,20 @@ parser code
 
 action code
 {:
-    
+    String cadena = "";
+    ArrayList<Simbolo> listaS = new ArrayList<>();
+    int contador = 0;
 :}
 
 //Declaraciones 
-terminal VB, JV, PY, COMILLAS, PUNTO, IDENTIFICADOR, NUMERO, DECIMAL, ASTERISCO;
+terminal COMILLAS, D, F, C, TEXTO;
 
 //terminal ;
 
 
 
 // declaracion no terminales
-non terminal INICIO, codigos, importacion_vb, importacion_jv, importacion_py, er;
+non terminal INICIO, codigos, er;
 
 //non terminal ;
 
@@ -59,23 +78,68 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=   COMILLAS codigos COMILLAS
+INICIO ::=   COMILLAS {:
+                    listaS = parser.listaS;
+                    contador = 0;
+                    parser.correcto = true;
+                    
+            :} codigos COMILLAS
             |error:e {:parser.syntax_error((Symbol)e); :} er;
 
 er ::= ;
 
-codigos ::=  VB importacion_vb
-            |JV importacion_jv
-            |PY importacion_py;
-
-importacion_vb ::=   PUNTO IDENTIFICADOR importacion_vb
-                    |PUNTO ASTERISCO
-                    |;
-
-importacion_jv ::=  PUNTO IDENTIFICADOR importacion_jv
-                    |PUNTO ASTERISCO
-                    |;
-
-importacion_py ::=  PUNTO IDENTIFICADOR importacion_py
-                    |PUNTO ASTERISCO
-                    |;
+codigos ::=  D {:
+                    if(cadena!=null && !cadena.isEmpty()){
+                        parser.listaC.add(new Cuarteto("PRINT","\""+cadena+"\"","","",8));
+                    }
+                    if(listaS.size()>0 && listaS.size()-1<=contador){
+                        if(listaS.get(contador).getTipo().equals("Integer")){
+                            if(parser.tipo==1){
+                                parser.listaC.add(new Cuarteto("SCANF","\"%d\"","",listaS.get(contador).getNombre()+"",8));
+                            }else{
+                                parser.listaC.add(new Cuarteto("PRINT","\"%d\","+listaS.get(contador).getNombre(),"","",8));
+                            }
+                        }else{parser.correcto = false;}
+                        
+                        contador++;
+                    }else{parser.correcto = false;}
+                    
+                    cadena = "";:} codigos
+            |F {:
+                    if(cadena!=null && !cadena.isEmpty()){
+                        parser.listaC.add(new Cuarteto("PRINT","\""+cadena+"\"","","",8));
+                    }
+                    if(listaS.size()>0 && listaS.size()-1<=contador){
+                        if(listaS.get(contador).getTipo().equals("Integer")){
+                            if(parser.tipo==1){
+                                parser.listaC.add(new Cuarteto("SCANF","\"%f\"","",listaS.get(contador).getNombre()+"",8));
+                            }else{
+                                parser.listaC.add(new Cuarteto("PRINT","\"%f\","+listaS.get(contador).getNombre(),"","",8));
+                            }
+                        }else{parser.correcto = false;}
+                        
+                        contador++;
+                    }else{parser.correcto = false;}
+                    
+                    cadena = "";:} codigos
+            |C {:
+                    if(cadena!=null && !cadena.isEmpty()){
+                        parser.listaC.add(new Cuarteto("PRINT","\""+cadena+"\"","","",8));
+                    }
+                    if(listaS.size()>0 && listaS.size()-1<=contador){
+                        if(listaS.get(contador).getTipo().equals("Integer")){
+                            if(parser.tipo==1){
+                                parser.listaC.add(new Cuarteto("SCANF","\"%c\"","",listaS.get(contador).getNombre()+"",8));
+                            }else{
+                                parser.listaC.add(new Cuarteto("PRINT","\"%c\","+listaS.get(contador).getNombre(),"","",8));
+                            }
+                        }else{parser.correcto = false;}
+                        
+                        contador++;
+                    }else{parser.correcto = false;}
+                    
+                    cadena = "";:} codigos
+            |TEXTO:a {:cadena += (String) a;:} codigos
+            |{:if(cadena!=null && !cadena.isEmpty()){
+                        parser.listaC.add(new Cuarteto("PRINT","\""+cadena+"\"","","",8));
+                    } cadena = "";:};

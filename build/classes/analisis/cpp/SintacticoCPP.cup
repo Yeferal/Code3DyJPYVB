@@ -1,5 +1,7 @@
 //codigo usuario
 package analisis.cpp;
+import analisis.cpp.importaciones.AnalizadorLexicoIm;
+import analisis.cpp.importaciones.AnalizadorSintacticoIm;
 import comprobaciones.ComprobadorAmbito;
 import comprobaciones.ComprobadorTipos;
 import comprobaciones.Nodo;
@@ -10,6 +12,11 @@ import simbolos.Simbolo;
 import simbolos.TablaSimbolos;
 import tresdirecciones.*;
 import errores.ErrorG;
+import java.io.StringReader;
+import comprobaciones.DatosLengueajes;
+import simbolos.ManejoObj;
+import simbolos.NodoClase;
+import simbolos.ObjJV;
 
 //Codigo para el parser, variables, metodos
 parser code
@@ -18,6 +25,14 @@ parser code
     public ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
     public ArrayList<ErrorG> erroresSintactico = new ArrayList<>();
     public TablaCuartetos tablaCuartetos = new TablaCuartetos();
+    public int contadorEVT = 0;
+    public int contadorET = 0;
+    public Generado3D generado3D = new Generado3D();
+    public DatosLengueajes datosLengueajes;
+    
+    public void setDatos(DatosLengueajes datosLengueajes){
+        this.datosLengueajes = datosLengueajes;
+    }
     
     private Symbol s;
     public void syntaxError(Symbol s){
@@ -51,6 +66,7 @@ action code
     ComprobadorTipos comprobadorTipos = new ComprobadorTipos();
     ComprobadorAmbito comprobadorAmbito = new ComprobadorAmbito();
     ArrayList<ErrorG> erroresSemanticos = new ArrayList<>();
+    ArrayList<Simbolo> listaS = new ArrayList<>();
     TablaCuartetos tablaCuartetos = new TablaCuartetos();
     int ambitoFlag = 0;
     int ambitoContador = 0;
@@ -61,11 +77,18 @@ action code
     int banderaET = 0;
     int flagET = 0;
     String op = "";
+    String nameCls = "";
+    String incl = "";
     String tipoV = "";
     String ids = "";
+    String idv = "";
     String codigo3D = "";
     ArrayList<Integer> ambitos = new ArrayList<>();
     TablaSimbolos tablaSimbolos = new TablaSimbolos();
+    AnalizadorLexicoIm aLIm = new AnalizadorLexicoIm(new StringReader("\"JAVA: %ddasd \""));
+    AnalizadorSintacticoIm aSIm = new AnalizadorSintacticoIm(aLIm);
+    Generado3D generado3D = new Generado3D();
+    ManejoObj manejoObj = new ManejoObj();
 :}
 
 //Declaraciones 
@@ -79,7 +102,7 @@ terminal FOR, WHILE, DO, IF, ELSE, SWITCH, CASE;
 terminal BREAK, DEFAULT, MAIN_VOID, RETURN, IDENTIFICADOR, NUMERO, DECIMAL, VALOR, TEXTO;
 terminal IGUAL, DOS_PUNTOS, CORCHETE_A, CORCHETE_C, LLAVES_A, LLAVES_C, PUNTO_COMA;
 terminal COMA, PARENTESIS_A, PARENTESIS_C, PUNTO, VB, PY, JV_ALL, JV_ONE;
-terminal VB_ONE, PY_ONE, VB_ALL, PY_ALL, MAIN_INT;
+terminal VB_ONE, PY_ONE, VB_ALL, PY_ALL, MAIN_INT, JV;
 //terminal ;
 
 
@@ -94,6 +117,7 @@ non terminal struc_logico, struc_logico_not, struc_if, struc_else, struc_switch;
 non terminal struc_case, valor_case, struc_function, struc_params, params;
 non terminal struc_vars_params, vars, mensaje, valor_m, parentesis, identificador_include, includs, includs_code, struc_llamada;
 non terminal struc_scanf, parametros_llamada, val_llamada, var_senten, struc_printf, struc_dim_arreglo;
+non terminal s_n, s_c, struc_objeto, struc_var_obj, struc_id_ob, struc_leng, params_llamada;
 //non terminal ;
 
 //presedencia de menor a mayor
@@ -109,10 +133,16 @@ start with INICIO;
 
 //Reglas Semanticas
 
-INICIO ::=  SEPARADOR_PROGRAMA {:ambitoFlag=0;ambitoActual=ambitoFlag;:} includs_code codigo struc_function {:
+INICIO ::=  SEPARADOR_PROGRAMA {:ambitoFlag=0;ambitoActual=ambitoFlag;
+                        contadorEVT = parser.contadorEVT;
+                        contadorET = parser.contadorET;   
+            :} includs_code codigo struc_function {:
                             parser.tablaSimbolos = tablaSimbolos; 
                             parser.erroresSemanticos = erroresSemanticos; 
                             parser.tablaCuartetos = tablaCuartetos; 
+                            parser.contadorEVT = contadorEVT;
+                            parser.contadorET = contadorET;
+                            parser.generado3D = generado3D;
             :};
 
 
@@ -137,16 +167,116 @@ codigo_funcion ::=   struc_vars codigo_funcion
                     |struc_switch codigo_funcion
                     |mensaje codigo_funcion
                     |comentarios codigo_funcion
-                    |SCANF TEXTO struc_scanf PARENTESIS_C PUNTO_COMA codigo_funcion
+                    |SCANF TEXTO:a struc_scanf PARENTESIS_C PUNTO_COMA {:
+                        try {
+                            aLIm = new AnalizadorLexicoIm(new StringReader((String)a));
+                            aSIm = new AnalizadorSintacticoIm(aLIm);
+                            aSIm.listaS = listaS;
+                            aSIm.tipo = 1;
+                            aSIm.parse();
+                            if(aSIm.correcto){
+                                tablaCuartetos.agregarLista(aSIm.listaC);
+                            }else{
+                                erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"El print contiene errores"));
+                            }
+                        } catch (Exception ex) {
+                            erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"El print contiene errores"));
+                        }
+                        
+                        
+                :}  codigo_funcion
                     |GETCH PUNTO_COMA codigo_funcion
                     |ANDPERSAND codigo_funcion
-                    |CLEARS PUNTO_COMA codigo_funcion
-                    |IDENTIFICADOR struc_llamada PUNTO_COMA codigo_funcion
+                    |CLEARS PUNTO_COMA {:tablaCuartetos.agregarCuarteto(new Cuarteto("CLRS","","","clrscr()",17));:} codigo_funcion
+                    |IDENTIFICADOR:a struc_llamada PUNTO_COMA {:
+                            if(a.equals("VB") || a.equals("JV") || a.equals("PY")){
+                                 incl = (String)a;
+                            }else{
+                                parser.erroresSintactico.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error en la llamada no existe")); incl = null;
+                            }
+                    :} codigo_funcion
+                    |struc_objeto codigo_funcion
+                    |struc_leng codigo_funcion
                     |
                     |error:e {:parser.syntax_error((Symbol)e); :} codigo_funcion;
 
 struc_llamada ::= PUNTO IDENTIFICADOR struc_llamada
                 |PUNTO IDENTIFICADOR PARENTESIS_A parametros_llamada PARENTESIS_C;
+
+struc_objeto ::= JV PUNTO IDENTIFICADOR:a IDENTIFICADOR:b {:
+                    NodoClase nodoCl = generado3D.buscarClase((String)a);
+                    if(nodoCl!=null){
+                        ObjJV objJV = new ObjJV((String)b,nodoCl);
+                        if(!tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) b)){
+                            manejoObj.agregarObj(objJV);
+                            tablaSimbolos.agregarSimbolo(new Simbolo((String)b,"Objeto",ambitoActual,null));
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("OBJETO",b+"","","call JAVA."+nodoCl.getNombre(),18));
+                        }else{
+                            erroresSemanticos.add(new ErrorG((String)b,aright+1,aleft+1,3,"Error ya existe un objeto con ese nombre"));
+                        }
+                    }else{
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error la clase no existe"));
+                    }
+                :} {:nameCls = (String)a; :} struc_var_obj PUNTO_COMA
+                |JV PUNTO IDENTIFICADOR:a IDENTIFICADOR:b PARENTESIS_A params_llamada PARENTESIS_C PUNTO_COMA {:
+                    NodoClase nodoCl = generado3D.buscarClase((String)a);
+                    if(nodoCl!=null){
+                        ObjJV objJV = new ObjJV((String)b,nodoCl);
+                        if(!tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) b)){
+                            manejoObj.agregarObj(objJV);
+                            tablaSimbolos.agregarSimbolo(new Simbolo((String)b,"Objeto",ambitoActual,null));
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("OBJETO",b+"","","call JAVA."+nodoCl.getNombre(),18));
+                        }else{
+                            erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"Error ya existe un objeto con ese nombre"));
+                        }
+                    }else{
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error la clase no existe"));
+                    }
+                :}
+                |JV PUNTO IDENTIFICADOR:a PUNTO IDENTIFICADOR:b PARENTESIS_A params_llamada PARENTESIS_C PUNTO_COMA {:
+                        if(manejoObj.buscarName((String)a)){
+                            if(manejoObj.buscarFuncion((String)b)){
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","","call JAVA."+a+"."+b,19));
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"Error la funcion no existe"));}
+                        }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error la clase no existe"));}
+
+                :};
+
+struc_var_obj ::= struc_id_ob;
+
+struc_id_ob ::= COMA IDENTIFICADOR:b {:
+                    NodoClase nodoCl = generado3D.buscarClase(nameCls);
+                    if(nodoCl!=null){
+                        ObjJV objJV = new ObjJV((String)b,nodoCl);
+                        if(!tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) b)){
+                            manejoObj.agregarObj(objJV);
+                            tablaSimbolos.agregarSimbolo(new Simbolo((String)b,"Objeto",ambitoActual,null));
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("OBJETO",b+"","","call JAVA."+nodoCl.getNombre(),18));
+                        }else{
+                            erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"Error ya existe un objeto con ese nombre"));
+                        }
+                    }
+                :} struc_id_ob
+                |;
+
+struc_leng ::=   VB:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C PUNTO_COMA {:
+                        if(generado3D.isVb()){
+                            if(parser.datosLengueajes.buscarFVB((String)a)){
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","","call VB."+a,19));
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                        }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo VB"));}
+                :}
+                |PY:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C PUNTO_COMA {:
+                        if(generado3D.isPy()){
+                            if(parser.datosLengueajes.buscarFPY((String)a)){
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","","call PY."+a,19));
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                        }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo PY"));}
+                :};
+
+params_llamada ::= valor COMA params_llamada
+                    |valor
+                    |;
 
 parametros_llamada ::= valor val_llamada
                         |;
@@ -159,10 +289,17 @@ comentarios ::=  COMENTARIO_SIMPLE
 
 
 includs ::=  INCLUDE MENOR_QUE IDENTIFICADOR identificador_include MAYOR_QUE 
-            |INCLUDE PY_ALL
-            |INCLUDE VB_ALL
-            |INCLUDE JV_ALL
-            |INCLUDE JV_ONE;
+            |INCLUDE PY_ALL {:generado3D.setPy(true); generado3D.setIncludeVB(parser.datosLengueajes.getTablaCVB());:}
+            |INCLUDE VB_ALL {:generado3D.setVb(true); generado3D.setIncludePY(parser.datosLengueajes.getTablaCPY());:}
+            |INCLUDE JV_ALL {:generado3D.setJv(true); generado3D.setIncludeClJV(parser.datosLengueajes.getListaCls());:}
+            |INCLUDE JV_ONE:a {:
+                    if(parser.datosLengueajes.buscarClase((String)a)){
+                        generado3D.agregarNodoClase(parser.datosLengueajes.getTB());
+                    }else{
+                        erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La clase no existe"));
+                    }
+                
+            :};
 
 identificador_include ::= PUNTO IDENTIFICADOR parentesis 
                         |PUNTO IDENTIFICADOR identificador_include
@@ -174,24 +311,57 @@ struc_vars ::=   INT {:tipoV="Integer";:} struc_asig_vars_n PUNTO_COMA
                 |FLOAT {:tipoV="Float";:} struc_asig_vars_n PUNTO_COMA
                 |CHAR {:tipoV="Char";:} struc_asig_vars_c PUNTO_COMA
                 |CONSTANTE struc_constante
-                |IDENTIFICADOR:a IGUAL var_senten:b PUNTO_COMA {:
+                |IDENTIFICADOR:a {:idv = (String)a;:} IGUAL var_senten:b PUNTO_COMA {:
                             if(b!=null){
                                 Nodo nodeB = (Nodo)b;
                                 if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                    if(nodeB.getTipo()!=0){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeB.getText(),"","&"+(String)a,15));
+                                    }else{
                                     
-                                    Simbolo s = tablaSimbolos.getSimbolo();
-                                    if(tablaSimbolos.isConstante() && comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
-                                        tablaSimbolos.setSimbolo(nodeB.getValor());
-                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeB.getText(),"",(String)a,0));
-                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
-
+                                        Simbolo s = tablaSimbolos.getSimbolo();
+                                        if(tablaSimbolos.isConstante() && comprobadorTipos.isValorCorrecto(s.getTipo(), nodeB.getValor())){
+                                            tablaSimbolos.setSimbolo(nodeB.getValor());
+                                            tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeB.getText(),"",(String)a,0));
+                                        }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La asignacion del valor de la variable no es correcta"));}
+                                    }
                                 }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito"));}
                             }
                         :}
                 |IDENTIFICADOR struc_dim_arreglo IGUAL var_senten PUNTO_COMA;
 
 var_senten ::=  valor:a {:RESULT = a;:}
-               |IDENTIFICADOR struc_llamada;
+               |GETCH {:RESULT = new Nodo("%d",0,1); :}
+                |VB:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C {:
+                                if(generado3D.isVb()){
+                                    if(parser.datosLengueajes.buscarFVB((String)a)){
+                                        if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, idv)){
+                                            tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","",idv+" = call VB."+a,19));
+                                        }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La Varaible \""+(String)c+"\" no ha sido declarada dentro del ambito"));}
+                                        
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo VB"));}
+                        :}
+                |PY:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C {:
+                                if(generado3D.isPy()){
+                                    if(parser.datosLengueajes.buscarFPY((String)a)){
+                                        if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, idv)){
+                                            tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","",idv+" = call PY."+a,19));
+                                        }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La Varaible \""+(String)c+"\" no ha sido declarada dentro del ambito"));}
+                                        
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo PY"));}
+                        :}
+                |JV:c PUNTO IDENTIFICADOR:a PUNTO IDENTIFICADOR:b PARENTESIS_A params_llamada PARENTESIS_C {:
+                        if(manejoObj.buscarName((String)a)){
+                            if(manejoObj.buscarFuncion((String)b)){
+                                if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, idv)){
+                                            tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","",idv+" = call JAVA."+a+"."+b,19));
+                                        }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"La Varaible \""+(String)c+"\" no ha sido declarada dentro del ambito"));}
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"Error la funcion no existe"));}
+                        }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error la clase no existe"));}
+
+                :};
 
 struc_constante ::=  INT {:tipoV="CONST_INT";:} struc_asig_vars_n PUNTO_COMA
                     |FLOAT {:tipoV="CONST_FLOAT";:} struc_asig_vars_n PUNTO_COMA
@@ -200,17 +370,29 @@ struc_constante ::=  INT {:tipoV="CONST_INT";:} struc_asig_vars_n PUNTO_COMA
 struc_dim_arreglo ::= CORCHETE_A valor CORCHETE_C struc_dim_arreglo
                     |CORCHETE_A valor CORCHETE_C;
 
-struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; Nodo nodeA = (Nodo)a;
+struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL s_n:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
                                 tipo = tipoV;
+                                nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                if(nodeA.getTipo()==2){
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","",comprobadorTipos.convertirTipoTexto(tipoV)+" "+b+nodeA.getText(),19));
+                                }else{
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipoV)+" "+(String)b+";",10));
                                     tablaSimbolos.agregarSimbolo(s);
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                }
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                        tablaSimbolos.agregarSimbolo(s);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :} COMA struc_asig_vars_n
                         |IDENTIFICADOR:b {:
@@ -220,17 +402,29 @@ struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; 
                                 tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipoV)+" "+(String)b+";",10));
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :} COMA struc_asig_vars_n
-                        |IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; Nodo nodeA = (Nodo)a;
+                        |IDENTIFICADOR:b IGUAL s_n:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
                                 tipo = tipoV;
+                                nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                if(nodeA.getTipo()==2){
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","",comprobadorTipos.convertirTipoTexto(tipoV)+" "+b+nodeA.getText(),19));
+                                }else{
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipoV)+" "+(String)b+";",10));
                                     tablaSimbolos.agregarSimbolo(s);
-                                    tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                }
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","",comprobadorTipos.convertirTipoTexto(tipo)+" "+(String)b+";",10));
+                                        tablaSimbolos.agregarSimbolo(s);
+                                        tablaCuartetos.agregarCuarteto(new Cuarteto("",nodeA.getText(),"",(String)b,0));
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :}
                         |IDENTIFICADOR struc_arreglo
@@ -242,15 +436,53 @@ struc_asig_vars_n ::=    IDENTIFICADOR:b IGUAL valor_n:a {: String tipo = null; 
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :};
 
-struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
+s_n ::= valor_n:a {:RESULT = a; :}
+        |GETCH {:RESULT = new Nodo("%d",0,1); :}
+        |VB:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C {:
+                                if(generado3D.isVb()){
+                                    if(parser.datosLengueajes.buscarFVB((String)a)){
+                                        RESULT = new Nodo(" = call VB."+a,0,2);
+                                        
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo VB"));}
+                        :}
+        |PY:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C {:
+                                if(generado3D.isPy()){
+                                    if(parser.datosLengueajes.buscarFPY((String)a)){
+                                        RESULT = new Nodo(" = call PY."+a,0,2);
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo PY"));}
+                        :}
+        |JV:c PUNTO IDENTIFICADOR:a PUNTO IDENTIFICADOR:b PARENTESIS_A params_llamada PARENTESIS_C {:
+                        if(manejoObj.buscarName((String)a)){
+                            if(manejoObj.buscarFuncion((String)b)){
+                                RESULT = new Nodo(" = call JAVA."+a+"."+b,0,2);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"Error la funcion no existe"));}
+                        }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error la clase no existe"));}
+
+                :};
+
+struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL s_c:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
                                 tipo = tipoV;
+                                nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                if(nodeA.getTipo()==2){
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","","char "+b+nodeA.getText(),19));
+                                }else{
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","","char "+(String)b+";",10));
                                     tablaSimbolos.agregarSimbolo(s);
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                }
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaSimbolos.agregarSimbolo(s);
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :} COMA struc_asig_vars_c
                         |IDENTIFICADOR:b {:
@@ -259,15 +491,27 @@ struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :} COMA struc_asig_vars_c
-                        |IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
+                        |IDENTIFICADOR:b IGUAL s_c:a {: String tipo = null; Nodo nodeA = null;
                             if(a!=null){
                                 tipo = tipoV;
+                                nodeA = (Nodo)a;
                             }
-                            if(tipo!=null){
-                                Simbolo s = new Simbolo((String)b,tipo,ambitoActual,a);
-                                if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                            if(nodeA!=null && nodeA.getTipo()!=0){
+                                if(nodeA.getTipo()==2){
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("LLAMADA","","","char "+b+nodeA.getText(),19));
+                                }else{
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("VAR", "","","char "+(String)b+";",10));
                                     tablaSimbolos.agregarSimbolo(s);
-                                }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                    tablaCuartetos.agregarCuarteto(new Cuarteto("SCANF",nodeA.getText(),"","&"+(String)b,15));
+                                }
+                            }else{
+                                if(tipo!=null){
+                                    Simbolo s = new Simbolo((String)b,tipo,ambitoActual,nodeA.getValor());
+                                    if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
+                                        tablaSimbolos.agregarSimbolo(s);
+                                    }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                                }
                             }
                         :}
                         |IDENTIFICADOR:b {:
@@ -276,6 +520,33 @@ struc_asig_vars_c ::=    IDENTIFICADOR:b IGUAL valor_c:a {: String tipo = null;
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
                         :};
+
+s_c ::= valor_c:a {:RESULT = a; :}
+        |GETCH {:RESULT = new Nodo("%c",'c',3); :}
+        |VB:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C {:
+                                if(generado3D.isVb()){
+                                    if(parser.datosLengueajes.buscarFVB((String)a)){
+                                        RESULT = new Nodo(" = call VB."+a,0,2);
+                                        
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo VB"));}
+                        :}
+        |PY:c PUNTO IDENTIFICADOR:a PARENTESIS_A params_llamada PARENTESIS_C {:
+                                if(generado3D.isPy()){
+                                    if(parser.datosLengueajes.buscarFPY((String)a)){
+                                        RESULT = new Nodo(" = call PY."+a,0,2);
+                                    }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error no existe la funcion"));}
+                                }else{erroresSemanticos.add(new ErrorG((String)c,cright+1,cleft+1,3,"Error no se importo PY"));}
+                        :}
+        |JV:c PUNTO IDENTIFICADOR:a PUNTO IDENTIFICADOR:b PARENTESIS_A params_llamada PARENTESIS_C {:
+                        if(manejoObj.buscarName((String)a)){
+                            if(manejoObj.buscarFuncion((String)b)){
+                                RESULT = new Nodo(" = call JAVA."+a+"."+b,0,2);
+                            }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"Error la funcion no existe"));}
+                        }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"Error la clase no existe"));}
+
+                :};
+
 
 struc_arreglo ::=    CORCHETE_A valor_int CORCHETE_C struc_arreglo
                     |CORCHETE_A valor_int CORCHETE_C;
@@ -393,9 +664,7 @@ valor_c ::=  valor_c:a MAS:c valor_c:b
             |valor_c:a MODULO:c valor_c:b 
             |PARENTESIS_A valor_c:a PARENTESIS_C
             |IDENTIFICADOR:a
-            |VALOR:a {:RESULT = (Integer)a;:}
-            |NUMERO:a {:RESULT = (Integer)a;:}
-            |DECIMAL:a ;
+            |VALOR:a {:RESULT = new Nodo((String)a,(String)a);:};
 
 valor_n ::=  valor_n:a MAS:c valor_n:b {:
                         if(a!=null && b!=null){
@@ -1319,13 +1588,30 @@ valor_case ::=   VALOR:a {:
                     }
         :};
 
-struc_function ::=  MAIN_VOID {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:}
+struc_function ::=  MAIN_VOID {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);
+                            tablaSimbolos.agregarSimbolo(new Simbolo("main","FUNCTION",0,null));
+                    :} PARENTESIS_A struc_params:a {:
+                            if(a!=null){
+                                String nameF = "void main"+(String)a+"()";
+                                tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));
+                            }else{String nameF = "void main()"; tablaCuartetos.agregarCuarteto(new Cuarteto("FUNCTION", "","",nameF,12));}
+                    :} PARENTESIS_C LLAVES_A codigo_funcion LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();
+                            tablaCuartetos.agregarCuarteto(new Cuarteto("CLOSE", "","","}",14));
+                    :}
                    |MAIN_INT {:ambitoFlag++;ambitoActual=ambitoFlag;comprobadorAmbito.agregarAmbito(ambitoFlag);:} PARENTESIS_A struc_params PARENTESIS_C LLAVES_A codigo_funcion RETURN valor PUNTO_COMA LLAVES_C {:comprobadorAmbito.sacarAmbito();ambitoActual=comprobadorAmbito.getAmbitoActual();:} ;
 
-struc_params ::= struc_vars_params params
-                |;
+struc_params ::= struc_vars_params:a params:b {:
+                    if(b!=null){
+                        RESULT = "_"+(String)a+"_"+(String)b;
+                    }else{ RESULT = "_"+(String)a;}
+                :} 
+                |{:RESULT = "";:};
 
-params ::=   COMA struc_vars_params params
+params ::=   COMA struc_vars_params:a params:b {:
+                    if(b!=null){
+                        RESULT = (String)a+"_"+(String)b;
+                    }else{RESULT = (String)a;}
+            :}
             |;
 
 struc_vars_params ::=    INT IDENTIFICADOR:b {:
@@ -1333,25 +1619,45 @@ struc_vars_params ::=    INT IDENTIFICADOR:b {:
                             if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = "int";
                         :}
                         |FLOAT IDENTIFICADOR:b {:
                             Simbolo s = new Simbolo((String)b,"Float",ambitoActual,null);
                             if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = "float";
                         :}
                         |CHAR IDENTIFICADOR:b {:
                             Simbolo s = new Simbolo((String)b,"Char",ambitoActual,null);
                             if(comprobadorAmbito.verificarVariable(tablaSimbolos.getListaSimbolos(),s)){
                                 tablaSimbolos.agregarSimbolo(s);
                             }else{erroresSemanticos.add(new ErrorG((String)b,bright+1,bleft+1,3,"La Varaible \""+(String)b+"\" ya ha sido declarada dentro del ambito"));}
+                            RESULT = "char";
                         :};
 
 vars ::=     INT
             |FLOAT
             |CHAR;
 
-mensaje ::= PRINTF valor_m:a  struc_printf PARENTESIS_C PUNTO_COMA;
+mensaje ::= PRINTF {:listaS.clear();:} TEXTO:a  struc_printf PARENTESIS_C PUNTO_COMA {:
+                        try {
+                            aLIm = new AnalizadorLexicoIm(new StringReader((String)a));
+                            aSIm = new AnalizadorSintacticoIm(aLIm);
+                            aSIm.listaS = listaS;
+                            aSIm.tipo = 0;
+                            aSIm.parse();
+                            if(aSIm.correcto){
+                                tablaCuartetos.agregarLista(aSIm.listaC);
+                            }else{
+                                erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"El print contiene errores"));
+                            }
+                        } catch (Exception ex) {
+                            erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"El print contiene errores"));
+                        }
+                        
+                        
+                :};
 
 valor_m ::=  valor_m:a MAS:c valor_m:b {: 
                         if(a!=null && b!=null){
@@ -1360,7 +1666,6 @@ valor_m ::=  valor_m:a MAS:c valor_m:b {:
                                 if((nodeA.getValor()!=null && nodeB.getValor()!=null) && comprobadorTipos.isInteger(nodeA.getValor()) && comprobadorTipos.isInteger(nodeB.getValor())){
                                     int resultado = (int) ((int)nodeA.getValor()+(int)nodeB.getValor()); 
                                     contadorEVT++;
-                                    codigo3D += "t"+contadorEVT+" := "+nodeA.getText()+" + "+nodeB.getText()+"\n";
                                     tablaCuartetos.agregarCuarteto(new Cuarteto("SUMA",nodeA.getText(),nodeB.getText(),"t"+contadorEVT,4));
                                     RESULT = new Nodo("t"+contadorEVT,resultado);
                                 }else{float resultado = (float) ((float)comprobadorTipos.convertirFlotante(nodeA.getValor())+(float)comprobadorTipos.convertirFlotante(nodeB.getValor())); 
@@ -1450,10 +1755,26 @@ valor_m ::=  valor_m:a MAS:c valor_m:b {:
                     RESULT = new Nodo((String)a,(String)a);
                 :};
 
-struc_printf ::= COMA ANDPERSAND IDENTIFICADOR struc_printf
-                |COMA IDENTIFICADOR struc_printf
+struc_printf ::= COMA ANDPERSAND IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                listaS.add(tablaSimbolos.getSimbolo());
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :} struc_printf
+                |COMA IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                listaS.add(tablaSimbolos.getSimbolo());
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :} struc_printf
                 |;
 
-struc_scanf ::= COMA ANDPERSAND IDENTIFICADOR struc_scanf
-                |COMA IDENTIFICADOR struc_scanf
+struc_scanf ::= COMA ANDPERSAND IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                listaS.add(tablaSimbolos.getSimbolo());
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :} struc_scanf
+                |COMA IDENTIFICADOR:a {:
+                            if(tablaSimbolos.isExistSimbolo(comprobadorAmbito.ambitosCamino, (String) a)){
+                                listaS.add(tablaSimbolos.getSimbolo());
+                            }else{erroresSemanticos.add(new ErrorG((String)a,aright+1,aleft+1,3,"La Varaible \""+(String)a+"\" no ha sido declarada dentro del ambito")); RESULT = null;}
+                :} struc_scanf
                 |;

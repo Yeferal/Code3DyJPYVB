@@ -1,11 +1,12 @@
 package analisis.java;
 import java_cup.runtime.*;
 import java.util.ArrayList;
+import errores.ErrorG;
 
 %%
 %{
     //coidgo de usuario en sintaxis java
-    //public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
+    public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
     public void pintar(String s){
         System.out.println(s);
     }
@@ -46,6 +47,7 @@ Espacio         = [ \t\r\n]+
     "int"                                   {pintar(yytext()); return new Symbol(SimbolosJAVA.INT , yycolumn, yyline, yytext());}
     "float"                                   {pintar(yytext()); return new Symbol(SimbolosJAVA.FLOAT , yycolumn, yyline, yytext());}
     "char"                                     {pintar(yytext()); return new Symbol(SimbolosJAVA.CHAR , yycolumn, yyline, yytext());}
+    "this."                                     {pintar(yytext()); return new Symbol(SimbolosJAVA.THIS , yycolumn, yyline, yytext());}
     
     //Reservadas
     "&&"                                       {pintar(yytext()); return new Symbol(SimbolosJAVA.AND , yycolumn, yyline, yytext());}
@@ -75,6 +77,7 @@ Espacio         = [ \t\r\n]+
     
     //Mensaje Pantalla
     "System.out.println("               {pintar("Mensaje SOUT: "+yytext()); return new Symbol(SimbolosJAVA.SOUT , yycolumn, yyline, yytext());}
+    "System.out.print("               {pintar("Mensaje SOUT: "+yytext()); return new Symbol(SimbolosJAVA.SOUT , yycolumn, yyline, yytext());}
     
     //Solicitud de Datos
     "intinput"                                  {pintar("intinput"); return new Symbol(SimbolosJAVA.INTINPUT , yycolumn, yyline, yytext());}
@@ -130,8 +133,8 @@ Espacio         = [ \t\r\n]+
     //".."                                        {pintar("PUNTO_PUNTO"); return new Symbol(SimbolosJAVA.PUNTO_PUNTO , yycolumn, yyline, yytext());}
     
     .                               {pintar("error Lexico: "+"Columna: "+yycolumn+1+" linea: "+ yyline+1 + "Token: "+yytext());
-                                    /*ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
-                                    listaErrores.add(e);*/
+                                    ErrorG e = new ErrorG(yytext(),yyline+1, yycolumn+1,1,"Error Lexico token: " + yytext());
+                                                listaErrores.add(e);
                                     }
     
 }

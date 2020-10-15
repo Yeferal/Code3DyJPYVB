@@ -1,11 +1,12 @@
 package analisis.vb;
+import errores.ErrorG;
 import java_cup.runtime.*;
 import java.util.ArrayList;
 
 %%
 %{
     //coidgo de usuario en sintaxis java
-    //public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
+    public ArrayList<ErrorG> listaErrores = new  ArrayList<>();
     public void pintar(String s){
         System.out.println(s);
     }
@@ -86,7 +87,7 @@ Siguiente       = (" _\n")+
     //Mensaje Pantalla
     "MsgBox("                                   {pintar("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
     "MessageBox("                               {pintar("Mensaje msgbox: "+yytext()); return new Symbol(SimbolosVB.MSG , yycolumn, yyline, yytext());}
-    "Console.WriteLine("                        {pintar("Mensaje console: "+yytext()); return new Symbol(SimbolosVB.CONSOLE_WRT , yycolumn, yyline, yytext());}
+    ("Console.WriteLine("|"Console.write(")                        {pintar("Mensaje console: "+yytext()); return new Symbol(SimbolosVB.CONSOLE_WRT , yycolumn, yyline, yytext());}
     "Print"                                     {pintar("Print: "+yytext()); return new Symbol(SimbolosVB.PRINT , yycolumn, yyline, yytext());}
     
     //Solicitud de Datos
@@ -162,8 +163,8 @@ Siguiente       = (" _\n")+
     //".."                                      {pintar("PUNTO_PUNTO"); return new Symbol(SimbolosVB.PUNTO_PUNTO , yycolumn, yyline, yytext());}
 
     .                                           {pintar("error Lexico: "+"Columna: "+yycolumn+1+" linea: "+ yyline+1 + "Token: "+yytext());
-                                    /*ErrorG e = new ErrorG(yyline+1, yycolumn+1,yytext(),"Lexico","Error Lexico token: " + yytext()+"   Linea: " + (yyline+1) + " ,    Columna: " + (yycolumn+1));
-                                    listaErrores.add(e);*/
+                                                ErrorG e = new ErrorG(yytext(),yyline+1, yycolumn+1,1,"Error Lexico token: " + yytext());
+                                                listaErrores.add(e);
                                     }
     
 }

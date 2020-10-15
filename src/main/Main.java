@@ -14,9 +14,11 @@ import analisis.vb.AnalizadorSintacticoVB;
 import archivos.Archivo;
 import comprobaciones.ComprobadorAmbito;
 import comprobaciones.ComprobadorTipos;
+import comprobaciones.DatosLengueajes;
 import java.io.StringReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import simbolos.NodoFuncionP;
 import ventanas.VentanaPrincipal; 
 
 
@@ -24,12 +26,13 @@ public class Main {
 
     
     public static void main(String[] args) {
-        //VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
-        //ventanaPrincipal.setVisible(true);
-        Archivo ar = new Archivo();
+        VentanaPrincipal ventanaPrincipal = new VentanaPrincipal();
+        ventanaPrincipal.setVisible(true);
+        /*Archivo ar = new Archivo();
 //        String texto = "while";
 //        String texto = ar.leerArchivo("src/prueba2.mlg");
         String texto = ar.leerArchivo("src/prueba3.mlg");
+        //String texto = ar.leerArchivo("src/entrada (1).mlg");
         //String texto = ar.leerArchivo("src/pruebaErrores.mlg");
         System.out.println("\"");
         //System.out.println(texto);
@@ -48,15 +51,23 @@ public class Main {
         AnalizadorLexicoPY analizadorLexicoPY = new AnalizadorLexicoPY(new StringReader(texto));
         AnalizadorSintacticoPY analizadorSintacticoPY = new AnalizadorSintacticoPY(analizadorLexicoPY);
         
-        AnalizadorLexicoCPP analizadorLexicoCPP = new AnalizadorLexicoCPP(new StringReader(texto));
+            AnalizadorLexicoCPP analizadorLexicoCPP = new AnalizadorLexicoCPP(new StringReader(texto));
         AnalizadorSintacticoCPP analizadorSintacticoCPP = new AnalizadorSintacticoCPP(analizadorLexicoCPP);
         
-        AnalizadorLexicoIm analizadorLexicoIm = new AnalizadorLexicoIm(new StringReader("\"JAVA.*\""));
+        AnalizadorLexicoIm analizadorLexicoIm = new AnalizadorLexicoIm(new StringReader("\"JAVA: %ddasd \""));
         AnalizadorSintacticoIm analizadorSintacticoIm = new AnalizadorSintacticoIm(analizadorLexicoIm);
         try {
             analizadorSintacticoVB.parse();
+            analizadorSintacticoJAVA.contadorET = analizadorSintacticoVB.contadorET;
+            analizadorSintacticoJAVA.contadorEVT = analizadorSintacticoVB.contadorEVT;
             analizadorSintacticoJAVA.parse();
+            analizadorSintacticoPY.contadorET = analizadorSintacticoJAVA.contadorET;
+            analizadorSintacticoPY.contadorEVT = analizadorSintacticoJAVA.contadorEVT;
             analizadorSintacticoPY.parse();
+            analizadorSintacticoCPP.contadorET = analizadorSintacticoPY.contadorET;
+            analizadorSintacticoCPP.contadorEVT = analizadorSintacticoPY.contadorEVT;
+            DatosLengueajes datosLengueajes = new DatosLengueajes(analizadorSintacticoVB.tablaCuartetos, analizadorSintacticoVB.listaF, analizadorSintacticoJAVA.listaCls, analizadorSintacticoPY.tablaCuartetos, analizadorSintacticoPY.listaF);
+            analizadorSintacticoCPP.setDatos(datosLengueajes);
             analizadorSintacticoCPP.parse();
             
             //analizadorSintacticoIm.parse();
@@ -70,19 +81,19 @@ public class Main {
             //analizadorSintacticoPY.tablaSimbolos.pintar();
             //System.out.println("\nTabla Simbolos CPP");
             //analizadorSintacticoCPP.tablaSimbolos.pintar();
-        } catch (Exception ex) {
+        /*} catch (Exception ex) {
             //ex.printStackTrace();
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        }*/
         
-        System.out.println("\nErrores VB");
+        /*System.out.println("\nErrores VB");
         for (int i = 0; i < analizadorSintacticoVB.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSintactico.get(i).toString());
         }
         for (int i = 0; i < analizadorSintacticoVB.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoVB.erroresSemanticos.get(i).toString());
         }
-        /*System.out.println("\nErrores JAVA");
+        System.out.println("\nErrores JAVA");
         for (int i = 0; i < analizadorSintacticoJAVA.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoJAVA.erroresSintactico.get(i).toString());
         }
@@ -95,30 +106,49 @@ public class Main {
         }
         for (int i = 0; i < analizadorSintacticoPY.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoPY.erroresSemanticos.get(i).toString());
-        }
-        System.out.println("\nErrores PROGRAMA PRINCIPAL");
+        }*/
+        
+        /*System.out.println("\nErrores PROGRAMA PRINCIPAL");
         for (int i = 0; i < analizadorSintacticoCPP.erroresSintactico.size(); i++) {
             System.out.println(analizadorSintacticoCPP.erroresSintactico.get(i).toString());
         }
         for (int i = 0; i < analizadorSintacticoCPP.erroresSemanticos.size(); i++) {
             System.out.println(analizadorSintacticoCPP.erroresSemanticos.get(i).toString());
-        }*/
-        System.out.println("");
+        }
+        System.out.println("");*/
         //String h = "'c'";
         //System.out.println("SUB: "+h.substring(1, 2));
         
-        System.out.println("\nCuartetos VB");
+        /*System.out.println("\nCuartetos VB");
         analizadorSintacticoVB.tablaCuartetos.pintar();
         System.out.println("\nCuartetos JAVA");
         analizadorSintacticoJAVA.tablaCuartetos.pintar();
-        /*System.out.println("\nCuartetos PY");
-        analizadorSintacticoPY.tablaCuartetos.pintar();
-        System.out.println("\nCuartetos CPP");
-        analizadorSintacticoCPP.tablaCuartetos.pintar();*/
+        System.out.println("\nCuartetos PY");
+        analizadorSintacticoPY.tablaCuartetos.pintar();*/
+        //System.out.println("\nCuartetos CPP");
+        //analizadorSintacticoCPP.tablaCuartetos.pintar();
         
-        //System.out.println(codigo3D);
+        //String h = "\"JAVA.HOLA\"";
+        //System.out.println("SUB: "+h.substring(6, h.length()-1));
+        
+        /*for (int i = 0; i < analizadorSintacticoVB.listaF.size(); i++) {
+            System.out.println("Nombre: "+analizadorSintacticoVB.listaF.get(i).getNombre()+",   params: "+analizadorSintacticoVB.listaF.get(i).getListaParametros());
+        }
+        for (int i = 0; i < analizadorSintacticoJAVA.listaCls.size(); i++) {
+            System.out.println("NombreClase: "+analizadorSintacticoJAVA.listaCls.get(i).getNombre()+", Funciones: "+analizadorSintacticoJAVA.listaCls.get(i).getListaF().size());
+            //analizadorSintacticoJAVA.listaCls.get(i).getTablaCuartetos().pintar();
+            for (int j = 0; j < analizadorSintacticoJAVA.listaCls.get(i).getListaF().size(); j++) {
+                System.out.println("Nombre: "+analizadorSintacticoJAVA.listaCls.get(i).getListaF().get(j).getNombre()+",   params: "+analizadorSintacticoJAVA.listaCls.get(i).getListaF().get(j).getListaParametros());
+            }
+        }
+        for (int i = 0; i < analizadorSintacticoPY.listaF.size(); i++) {
+            System.out.println("Nombre: "+analizadorSintacticoPY.listaF.get(i).getNombre()+",   params: "+analizadorSintacticoPY.listaF.get(i).getListaParametros());
+        }*/
+        /*analizadorSintacticoVB.tablaCuartetos.generarTexto();
+        
+        System.out.println(analizadorSintacticoVB.tablaCuartetos.getTextoCuartetos());
         ComprobadorTipos c = new ComprobadorTipos();
-        ComprobadorAmbito ca = new ComprobadorAmbito();
+        ComprobadorAmbito ca = new ComprobadorAmbito();*/
         //c.isNumero("55.00");
         //c.isFloat("555");
         //c.isFloat("5.3");
